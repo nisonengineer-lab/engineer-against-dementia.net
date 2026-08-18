@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ru" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="meta.title">BeKavod — домашний присмотр за пожилыми. Без облака.</title>
+<meta name="description" data-i18n-attr="content:meta.desc" content="Локальная система видеонаблюдения и оповещений для ухода за пожилыми родственниками. Видео не покидает дом. Без облака и подписок.">
+<meta name="theme-color" content="#12100E">
+<link rel="preload" as="image" href="images/hands.avif" type="image/avif" fetchpriority="high">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="hero">
+
+  <!-- Фотография баннера.
+       <picture>: AVIF -> WebP -> JPEG. Браузер берёт первый понятный ему.
+       fetchpriority="high" — это LCP-элемент, грузим его первым.
+       Никакого lazy: изображение видно сразу, отложенная загрузка тут вредит. -->
+  <div class="hero__media">
+    <picture>
+      <source type="image/avif" srcset="images/hands.avif">
+      <source type="image/webp" srcset="images/hands-1280.webp 1280w, images/hands-1920.webp 1920w"
+              sizes="100vw">
+      <img src="images/hands-1280.jpg"
+           srcset="images/hands-1280.jpg 1280w, images/hands-1920.jpg 1920w"
+           sizes="100vw"
+           width="1280" height="714"
+           fetchpriority="high" decoding="async"
+           data-i18n-attr="alt:hero.alt" alt="Внук держит деда за руку во дворе на закате">
+    </picture>
+  </div>
+  <div class="hero__scrim"></div>
+
+  <div class="wrap hero__bar">
+    <nav class="nav">
+      <a class="brand" href="/">
+        <span class="brand__mark">Be<span>Kavod</span></span>
+        <span class="brand__tag" data-i18n="brand.tag">домашний присмотр</span>
+      </a>
+      <div class="nav__links">
+        <a href="#story" data-i18n="nav.why">Почему</a>
+        <a href="#how" data-i18n="nav.how">Как это работает</a>
+        <a href="#privacy" data-i18n="nav.privacy">Приватность</a>
+        <a href="#contact" data-i18n="nav.contact">Контакты</a>
+        <a href="/journal/" data-i18n="nav.journal">Журнал</a>
+        <a href="/engineering/" data-i18n="nav.eng">Инженерия</a>
+        <span class="lang">
+          <a href="?lang=en" data-lang="en">EN</a>
+          <a href="?lang=ru" data-lang="ru">RU</a>
+          <a href="?lang=he" data-lang="he">HE</a>
+        </span>
+      </div>
+    </nav>
+  </div>
+
+  <div class="wrap hero__body">
+    <div class="hero__col">
+      <p class="kicker" data-i18n="hero.kicker">Всё считается дома · видео не уходит в облако</p>
+
+      <!-- Обещание покупателю, а не старику: платит и выгорает тот,
+           кто ухаживает. Ровно то же говорит блок «Почему BeKavod». -->
+      <h1 data-i18n="hero.h1">Он остаётся дома.
+        <span class="dim">А вы возвращаетесь к своей жизни.</span></h1>
+
+      <!-- Лента событий. На живом сайте строки приходят из базы. -->
+      <div class="ticker" id="ticker" aria-live="off">
+        <div class="ticker__item is-on">
+          <span class="ticker__time">03:14</span>
+          <span class="ticker__text" data-i18n="hero.tick1"><b>Вышел за калитку.</b> Уведомление на телефон через четыре секунды.</span>
+        </div>
+        <div class="ticker__item">
+          <span class="ticker__time">07:42</span>
+          <span class="ticker__text" data-i18n="hero.tick2"><b>Завтрак, двадцать минут.</b> Как обычно — тревоги нет.</span>
+        </div>
+        <div class="ticker__item">
+          <span class="ticker__time">14:20</span>
+          <span class="ticker__text" data-i18n="hero.tick3"><b>Дневной отдых дольше обычного.</b> Отмечено, никого не разбудило.</span>
+        </div>
+        <div class="ticker__item">
+          <span class="ticker__time">23:50</span>
+          <span class="ticker__text" data-i18n="hero.tick4"><b>Лёг спать.</b> Ночью система следит за выходом из кровати.</span>
+        </div>
+      </div>
+
+      <div class="cta">
+        <a class="btn btn--primary" href="#how" data-i18n="hero.cta1">Как это работает</a>
+        <a class="btn btn--ghost" href="#contact" data-i18n="hero.cta2">Написать мне</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap hero__foot">
+    <span class="live">
+      <span class="live__dot" aria-hidden="true"></span>
+      <span data-i18n="hero.live">система работает · 2 камеры · дом в Явне</span>
+    </span>
+    <span class="credit" data-i18n="hero.credit">Дед и я. Явне, август 2026</span>
+  </div>
+
+</header>
+
+<!-- ==========================================================================
+     ПОЧЕМУ BEKAVOD. Фотография деда во всю ширину, текст слева,
+     плашка опекунства в правом нижнем углу.
+     Наклейка на футболке заранее размыта в самом файле: полагаться на то,
+     что плашка её закроет, нельзя — вёрстка на разных экранах ездит,
+     а под наклейкой реальный номер телефона.
+     ========================================================================== -->
+<section class="why" id="story">
+
+  <div class="why__media">
+    <picture>
+      <source type="image/avif"
+              srcset="images/gd-full-1280.avif 1280w, images/gd-full-1920.avif 1920w"
+              sizes="100vw">
+      <source type="image/webp"
+              srcset="images/gd-full-1280.webp 1280w, images/gd-full-1920.webp 1920w"
+              sizes="100vw">
+      <img src="images/gd-full-1280.jpg"
+           srcset="images/gd-full-1280.jpg 1280w, images/gd-full-1920.jpg 1920w"
+           sizes="100vw" width="1280" height="714"
+           loading="lazy" decoding="async"
+           data-i18n-attr="alt:why.alt" alt="Дедушка улыбается, во дворе на закате">
+    </picture>
+  </div>
+  <div class="why__scrim"></div>
+
+  <div class="wrap why__in">
+    <div class="why__text">
+      <!-- Вопрос — заголовок раздела. Всё ниже отвечает на него.
+           Блок написан от лица покупателя: платит не старик, а тот,
+           кто за ним ухаживает и теряет из-за этого свою жизнь. -->
+      <h2 class="why__q reveal" data-delay="0" data-i18n="why.q">Почему <span class="why__brand">Be<span>Kavod</span></span>?</h2>
+
+      <!-- &nbsp; после «А» — иначе одинокая буква повисает в конце строки -->
+      <p class="why__lead reveal" data-delay="1" data-i18n="why.lead">Я перевёз деда в Израиль.
+        А&nbsp;через год перестал жить своей жизнью.</p>
+
+      <p class="reveal" data-delay="2" data-i18n="why.p1">Он уходил из дома. Я срывался с работы искать
+        его — и работу потерял. Не уезжал на выходные. Спал вполуха: ночь — самое
+        опасное время.</p>
+
+      <p class="reveal" data-delay="2" data-i18n="why.p2">Этого не принято говорить вслух: ухаживать за
+        близким тяжело. И оттого, что любишь, легче не становится.</p>
+
+      <blockquote class="pull reveal" data-delay="3" data-i18n="why.quote">
+        Я не хотел отдавать деда в дом престарелых.
+        Но и терять свою жизнь я тоже не хотел.
+      </blockquote>
+
+      <p class="reveal" data-delay="3" data-i18n="why.p3">Поэтому я собрал систему. Не чтобы следить —
+        чтобы <b>перестать сторожить</b>. Подойдёт к калитке — телефон разбудит за
+        четыре секунды. Не случилось ничего — меня не трогают.</p>
+
+      <p class="reveal" data-delay="4" data-i18n="why.p4">Дед живёт дома. Я работаю, вижусь с людьми и сплю.</p>
+
+      <p class="closing reveal" data-delay="4" data-i18n="why.closing"><b>כבוד</b> — достоинство.
+        <span>Обоих.</span></p>
+    </div>
+
+    <aside class="factcard reveal" data-delay="2">
+      <p class="factcard__label" data-i18n="card.label">Кто я деду</p>
+      <p class="factcard__value" data-i18n="card.value">Официальный опекун</p>
+      <p class="factcard__note" data-i18n="card.note">имущественный и медицинский · действую от его лица и в его интересах</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     КАК ЭТО РАБОТАЕТ
+
+     Сверху приходят четыре провода и по дороге разбираются по блокам.
+     Каждый блок — .node: сетка «колонка · жёлоб · колонка», жёлоб всегда
+     по центру, поэтому провод висит на calc(50% + смещение) и не зависит
+     от ширины колонок. Провод, который в блоке заканчивается, помечен
+     .lane--cut: он обрывается ровно на линии развилки.
+
+         ····  появляются из ниоткуда
+     Провод берётся с той стороны, где стоит картинка: слева стоит —
+     уходит левый, справа — правый. Иначе шнур пересекал бы колонку.
+
+         01  ├─◄ камера · датчик     картинки слева  → левый крайний 1
+         02  ─►┤ мозг ИИ             картинка справа → правый крайний 4
+         03  ├─◄ тревога             картинка слева  → левый ближний 2
+         04  ──▼ коробка             последний 3 идёт прямо и гаснет
+     ========================================================================== -->
+<section class="how" id="how">
+  <div class="wrap">
+
+    <header class="how__head">
+      <h2 class="how__title reveal" data-delay="0" data-i18n="how.title">Как это работает</h2>
+      <p class="how__sub reveal" data-delay="1" data-i18n="how.sub">Вы не следите. Следит она.</p>
+    </header>
+
+    <div class="rail">
+
+      <!-- провода проявляются из ничего -->
+      <div class="lead" aria-hidden="true">
+        <span class="lane lane--1"></span><span class="lane lane--2"></span>
+        <span class="lane lane--3"></span><span class="lane lane--4"></span>
+      </div>
+
+      <!-- ============ 01 · ГЛАЗА И УШИ ============ -->
+      <section class="node node--eyes" aria-labelledby="eyes-h">
+        <span class="lane lane--1 lane--cut" aria-hidden="true"></span>
+        <span class="lane lane--2" aria-hidden="true"></span>
+        <span class="lane lane--3" aria-hidden="true"></span>
+        <span class="lane lane--4" aria-hidden="true"></span>
+
+        <div class="node__media">
+          <figure class="pic">
+            <picture>
+              <source type="image/avif" srcset="images/c-cam-440.avif 440w, images/c-cam-880.avif 880w" sizes="(max-width:900px) 46vw, 26vw">
+              <source type="image/webp" srcset="images/c-cam-440.webp 440w, images/c-cam-880.webp 880w" sizes="(max-width:900px) 46vw, 26vw">
+              <img src="images/c-cam-440.jpg" srcset="images/c-cam-440.jpg 440w, images/c-cam-880.jpg 880w"
+                   sizes="(max-width:900px) 46vw, 26vw" width="440" height="440"
+                   loading="lazy" decoding="async" data-i18n-attr="alt:n1.altCam" alt="Камера во дворе">
+            </picture>
+          </figure>
+
+          <figure class="pic">
+            <picture>
+              <source type="image/avif" srcset="images/c-sen-440.avif 440w, images/c-sen-880.avif 880w" sizes="(max-width:900px) 46vw, 26vw">
+              <source type="image/webp" srcset="images/c-sen-440.webp 440w, images/c-sen-880.webp 880w" sizes="(max-width:900px) 46vw, 26vw">
+              <img src="images/c-sen-440.jpg" srcset="images/c-sen-440.jpg 440w, images/c-sen-880.jpg 880w"
+                   sizes="(max-width:900px) 46vw, 26vw" width="440" height="440"
+                   loading="lazy" decoding="async" data-i18n-attr="alt:n1.altSen" alt="Датчик в комнате">
+            </picture>
+          </figure>
+
+          <!-- развилка на две картинки -->
+          <span class="br br--top" aria-hidden="true"></span>
+          <span class="br br--bot" aria-hidden="true"></span>
+          <span class="feed" aria-hidden="true"></span>
+        </div>
+
+        <div class="node__say">
+          <p class="say__kind reveal" data-delay="1"><i>01</i> <span data-i18n="n1.kind">Глаза и уши</span></p>
+          <h3 class="say__h reveal" data-delay="1" id="eyes-h" data-i18n="n1.h">Дом замечает раньше вас</h3>
+          <p class="say__p reveal" data-delay="2" data-i18n="n1.p1"><b>Глаза — это камеры.</b> Они стоят там,
+            откуда человек уходит из дома: калитка, входная дверь, двор.</p>
+          <p class="say__p reveal" data-delay="2" data-i18n="n1.p2"><b>Уши — это датчики.</b> Они стоят там,
+            где камере не место: ванная, спальня. Датчик ничего не снимает —
+            он чувствует движение, дыхание и падение.</p>
+        </div>
+      </section>
+
+      <!-- ============ 02 · РАЗУМ ============ -->
+      <section class="node node--mind" aria-labelledby="mind-h">
+        <span class="lane lane--2" aria-hidden="true"></span>
+        <span class="lane lane--3" aria-hidden="true"></span>
+        <span class="lane lane--4 lane--cut" aria-hidden="true"></span>
+
+        <div class="node__media">
+          <figure class="pic pic--brain">
+            <canvas id="brain" role="img"
+                    data-i18n-attr="aria-label:n2.canvas" aria-label="Схема нейронной сети: узлы соединены линиями, по ним бегут импульсы"></canvas>
+          </figure>
+          <span class="feed feed--right" aria-hidden="true"></span>
+        </div>
+
+        <div class="node__say">
+          <p class="say__kind reveal" data-delay="1"><i>02</i> <span data-i18n="n2.kind">Разум</span></p>
+          <h3 class="say__h reveal" data-delay="1" id="mind-h" data-i18n="n2.h">Замечает то, что вы пропустите</h3>
+          <p class="say__p reveal" data-delay="2" data-i18n="n2.p1">Во сколько лёг и сколько раз вставал ночью.
+            Когда поел. Принял ли лекарство. Сколько раз дошёл до туалета.
+            Система считает это сама, каждый день, молча.</p>
+          <p class="say__p reveal" data-delay="2" data-i18n="n2.p2">По одному дню цифры ничего не значат.
+            За месяц из них видно, что человеку стало хуже — <b>раньше, чем это
+            заметите вы</b>. И для этого не нужно сидеть рядом.</p>
+        </div>
+      </section>
+
+
+      <!-- ============ 03 · ТРЕВОГА ============ -->
+      <section class="node node--alert" aria-labelledby="alert-h">
+        <span class="lane lane--2 lane--cut" aria-hidden="true"></span>
+        <span class="lane lane--3" aria-hidden="true"></span>
+
+        <div class="node__media">
+          <figure class="pic">
+            <picture>
+              <source type="image/avif" srcset="images/c-alert-320.avif 320w, images/c-alert-560.avif 560w" sizes="(max-width:900px) 56vw, 30vw">
+              <source type="image/webp" srcset="images/c-alert-320.webp 320w, images/c-alert-560.webp 560w" sizes="(max-width:900px) 56vw, 30vw">
+              <img src="images/c-alert-320.jpg" srcset="images/c-alert-320.jpg 320w, images/c-alert-560.jpg 560w"
+                   sizes="(max-width:900px) 56vw, 30vw" width="560" height="560"
+                   loading="lazy" decoding="async"
+                   data-i18n-attr="alt:n3.alt" alt="Руки держат телефон, вокруг сыплются значки тревоги и сообщений">
+            </picture>
+          </figure>
+          <span class="feed feed--left" aria-hidden="true"></span>
+        </div>
+
+        <div class="node__say">
+          <p class="say__kind reveal" data-delay="1"><i>03</i> <span data-i18n="n3.kind">Тревога</span></p>
+          <h3 class="say__h reveal" data-delay="1" id="alert-h" data-i18n="n3.h">Когда счёт идёт на минуты</h3>
+          <p class="say__p reveal" data-delay="2" data-i18n="n3.p1">Упал в ванной. Открыл калитку в три ночи.
+            Не встал утром. Ради этих случаев всё и собиралось — остальное время
+            система молчит.</p>
+          <p class="say__p reveal" data-delay="2" data-i18n="n3.p2">Телефон звонит громко — <b>как будильник,
+            а не как уведомление</b>, даже если он в беззвучном. На экране сразу
+            видно что, где и во сколько. Ехать или звонить — решаете вы.
+            Но узнаёте первым.</p>
+        </div>
+      </section>
+
+
+      <!-- ============ 04 · ПРИВАТНОСТЬ — конец провода ============
+           Коробка стоит по центру, последний провод сходит к ней
+           S-образным изгибом и растворяется прямо над ней.
+           Описание — четыре тезиса по бокам от коробки. -->
+      <section class="node node--box" id="privacy" aria-labelledby="box-h">
+        <span class="lane lane--3 lane--cut" aria-hidden="true"></span>
+        <!-- На широком экране провод идёт прямо и гаснет над коробкой.
+             Угол нужен только на узком: там жгут прижат к краю. -->
+        <span class="wire-s wire-s--a" aria-hidden="true"></span>
+        <span class="drop" data-fork aria-hidden="true"></span>
+
+        <div class="ring">
+          <ul class="claims claims--start">
+            <li>
+              <b data-i18n="n4.c1b">Видео не уходит в интернет</b>
+              <span data-i18n="n4.c1s">Ни в облако, ни к нам, ни к производителю камер.
+                Отправлять его просто некуда.</span>
+            </li>
+            <li>
+              <b data-i18n="n4.c2b">Нет подписки за просмотр</b>
+              <span data-i18n="n4.c2s">Свой двор вы смотрите бесплатно. Всегда.</span>
+            </li>
+          </ul>
+
+          <figure class="pic pic--box">
+            <picture>
+              <source type="image/avif" srcset="images/c-box-440.avif 440w, images/c-box-880.avif 880w" sizes="(max-width:900px) 62vw, 30vw">
+              <source type="image/webp" srcset="images/c-box-440.webp 440w, images/c-box-880.webp 880w" sizes="(max-width:900px) 62vw, 30vw">
+              <img src="images/c-box-440.jpg" srcset="images/c-box-440.jpg 440w, images/c-box-880.jpg 880w"
+                   sizes="(max-width:900px) 62vw, 30vw" width="880" height="880"
+                   loading="lazy" decoding="async"
+                   data-i18n-attr="alt:n4.alt" alt="Небольшая чёрная коробка системы на столе">
+            </picture>
+          </figure>
+
+          <ul class="claims claims--end">
+            <li>
+              <b data-i18n="n4.c3b">Работает без интернета</b>
+              <span data-i18n="n4.c3s">Связь нужна только чтобы позвать вас. Смотрит
+                и считает система сама.</span>
+            </li>
+            <li>
+              <b data-i18n="n4.c4b">Стереть можно за минуту</b>
+              <span data-i18n="n4.c4s">Выключили коробку — не осталось ничего и нигде.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="box__say">
+          <p class="say__kind reveal" data-delay="1"><i>04</i> <span data-i18n="n4.kind">Приватность</span></p>
+          <h3 class="say__h reveal" data-delay="1" id="box-h" data-i18n="n4.h">Всё остаётся в этой коробке</h3>
+          <p class="say__p reveal" data-delay="2" data-i18n="n4.p">Она стоит у вас на полке и помещается
+            в ладонь. Камеры и датчики говорят только с ней, она — только с вашим
+            телефоном. <b>Это не пункт в договоре, а то, как система собрана:</b>
+            наружу вести некуда.</p>
+        </div>
+      </section>
+
+
+    </div><!-- /rail -->
+  </div>
+</section>
+
+
+<!-- ==========================================================================
+     СВЯЗАТЬСЯ. Слева — что произойдёт после письма, справа — каналы.
+     Форму намеренно не ставлю: аудитория взрослая, ей проще нажать
+     «позвонить», чем заполнять поля. Каждый канал — крупная ссылка,
+     на телефоне попадаешь пальцем без прицеливания.
+     ЗАМЕНИТЬ ПЕРЕД ПУБЛИКАЦИЕЙ: номера и адреса помечены data-todo.
+     ========================================================================== -->
+<section class="contact" id="contact">
+  <div class="wrap contact__grid">
+
+    <div class="contact__left">
+      <p class="eyebrow" data-i18n="c.eyebrow">Связаться</p>
+      <h2 class="contact__h reveal" data-delay="0" data-i18n="c.h">Напишите — отвечу я сам</h2>
+      <p class="contact__lead reveal" data-delay="1" data-i18n="c.lead">Здесь нет колл-центра. На той стороне
+        тот же человек, который собрал эту систему для своего деда.</p>
+
+      <ol class="steps">
+        <li class="reveal" data-delay="2">
+          <span class="steps__n">1</span>
+          <b data-i18n="c.s1b">Отвечаю в тот же день</b>
+          <em data-i18n="c.s1e">Расспрошу про дом и про то, что беспокоит больше всего.</em>
+        </li>
+        <li class="reveal" data-delay="2">
+          <span class="steps__n">2</span>
+          <b data-i18n="c.s2b">Приезжаю посмотреть</b>
+          <em data-i18n="c.s2e">Бесплатно. Где калитка, где кровать, где камеры не будет никогда.</em>
+        </li>
+        <li class="reveal" data-delay="3">
+          <span class="steps__n">3</span>
+          <b data-i18n="c.s3b">Ставлю за один день</b>
+          <em data-i18n="c.s3e">Уезжаю тогда, когда телефон уже звонит так, как надо вам.</em>
+        </li>
+      </ol>
+
+      <p class="contact__where reveal" data-delay="3" data-i18n="c.where">Явне и центр страны ·
+        по-русски, בעברית, in English</p>
+    </div>
+
+    <div class="contact__right">
+      <a class="chan reveal" data-delay="1" href="https://wa.me/972000000000" data-todo="номер WhatsApp">
+        <svg class="chan__i" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Z"/>
+          <path d="M8.4 7.6c.3-.6.6-.6.9-.6h.7c.2 0 .5 0 .7.6l.9 2.1c.1.3 0 .5-.1.7l-.5.6c-.2.2-.3.4-.1.7a7 7 0 0 0 3.3 2.9c.3.1.5 0 .7-.2l.6-.7c.2-.2.4-.2.6-.1l2 1c.3.1.4.3.4.5 0 .6-.3 1.4-.8 1.8-.5.4-1.3.6-2 .5-2-.3-4.2-1.6-5.9-3.4-1.6-1.7-2.6-3.7-2.6-5 0-.7.2-1.3.6-1.8Z" class="chan__i--cut"/>
+        </svg>
+        <span class="chan__t">
+          <b data-i18n="c.wa">WhatsApp</b>
+          <em>+972 00-000-0000</em>
+        </span>
+        <span class="chan__go" aria-hidden="true">→</span>
+      </a>
+
+      <a class="chan reveal" data-delay="2" href="https://t.me/bekavod" data-todo="имя в Telegram">
+        <svg class="chan__i" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21.6 4.2 2.9 11.4c-.9.3-.8 1.5.1 1.7l4.6 1.2 1.8 5.3c.3.8 1.3.9 1.8.3l2.4-2.7 4.6 3.4c.7.5 1.6.1 1.8-.7l3-14.4c.2-.9-.6-1.6-1.4-1.3Z"/>
+          <path d="M7.6 14.3 18 7l-8 8.2-.2 3.3-2.2-4.2Z" class="chan__i--cut"/>
+        </svg>
+        <span class="chan__t">
+          <b data-i18n="c.tg">Telegram</b>
+          <em>@bekavod</em>
+        </span>
+        <span class="chan__go" aria-hidden="true">→</span>
+      </a>
+
+      <a class="chan reveal" data-delay="2" href="tel:+972000000000" data-todo="телефон">
+        <svg class="chan__i" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7.6 3h-2A2.6 2.6 0 0 0 3 5.9C3 14.2 9.8 21 18.1 21a2.6 2.6 0 0 0 2.9-2.6v-2c0-.5-.3-.9-.8-1l-3.5-1c-.5-.1-1 .1-1.2.5l-.9 1.6c-2.6-1.2-4.7-3.3-5.9-5.9l1.6-.9c.4-.2.6-.7.5-1.2l-1-3.5c-.1-.5-.6-.8-1-.8Z"/>
+        </svg>
+        <span class="chan__t">
+          <b data-i18n="c.tel">Позвонить</b>
+          <em>+972 00-000-0000</em>
+        </span>
+        <span class="chan__go" aria-hidden="true">→</span>
+      </a>
+
+      <a class="chan reveal" data-delay="3" href="mailto:hello@engineeragainstdementia.net" data-todo="почта">
+        <svg class="chan__i" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
+          <path d="M3.5 7.5 12 13l8.5-5.5" class="chan__i--cut" fill="none"
+                stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span class="chan__t">
+          <b data-i18n="c.mail">Почта</b>
+          <em>hello@engineeragainstdementia.net</em>
+        </span>
+        <span class="chan__go" aria-hidden="true">→</span>
+      </a>
+
+      <p class="chan__note" data-i18n="c.note">Не дозвонились — напишите в WhatsApp. Я перезвоню сам.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==========================================================================
+     ФУТЕР
+     ========================================================================== -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__top">
+      <div class="foot__brand">
+        <a class="brand" href="/">
+          <span class="brand__mark">Be<span>Kavod</span></span>
+        </a>
+        <p class="foot__tag" data-i18n="f.tag">Домашний присмотр за пожилыми.<br>
+          Всё считается дома, видео не уходит в облако.</p>
+        <p class="foot__made" data-i18n="f.made">Собрано в Явне для своего деда — и для ваших.</p>
+      </div>
+
+      <nav class="foot__nav" aria-label="Подвал">
+        <div>
+          <h3 data-i18n="f.h1">Система</h3>
+          <a href="#how" data-i18n="f.how">Как это работает</a>
+          <a href="#privacy" data-i18n="f.privacy">Приватность</a>
+          <a href="#story" data-i18n="f.why">Почему BeKavod</a>
+        </div>
+        <div>
+          <h3 data-i18n="f.h2">Живое</h3>
+          <a href="/journal/" data-i18n="f.journal">Журнал</a>
+          <a href="/video/" data-i18n="f.video">Видео</a>
+        </div>
+        <div>
+          <h3 data-i18n="f.h3">Ещё</h3>
+          <a href="/engineering/" data-i18n="f.eng">Инженерия</a>
+          <a href="https://github.com/nisonengineer-lab" rel="noopener" data-i18n="f.src">Исходники</a>
+          <a href="#contact" data-i18n="f.contact">Связаться</a>
+        </div>
+      </nav>
+    </div>
+
+    <div class="foot__bot">
+      <span data-i18n="f.copy">© 2026 BeKavod · Явне, Израиль</span>
+      <span class="lang">
+        <a href="?lang=en" data-lang="en">EN</a>
+        <a href="?lang=ru" data-lang="ru">RU</a>
+        <a href="?lang=he" data-lang="he">HE</a>
+      </span>
+      <span class="foot__kavod" data-i18n="f.kavod"><b>כבוד</b> — достоинство. Обоих.</span>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+/* Смена строки журнала. Без внешних библиотек и без хранилищ.
+   Пауза, если пользователь просил меньше движения или вкладка не видна. */
+(function () {
+  var items = document.querySelectorAll('#ticker .ticker__item');
+  if (items.length < 2) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var i = 0, timer = null;
+  function step() {
+    items[i].classList.remove('is-on');
+    i = (i + 1) % items.length;
+    items[i].classList.add('is-on');
+  }
+  function start() { if (!timer) timer = setInterval(step, 3800); }
+  function stop()  { clearInterval(timer); timer = null; }
+  document.addEventListener('visibilitychange', function () {
+    document.hidden ? stop() : start();
+  });
+  start();
+})();
+</script>
+
+
+<script>
+/* Появление по скроллу. Направление берётся из того, куда листает читатель:
+   вниз — элемент приходит сверху, вверх — снизу. Библиотек нет.
+   Класс .js ставится отсюда: без JS элементы остаются видимыми. */
+(function () {
+  var root = document.documentElement;
+  if (!('IntersectionObserver' in window)) return;
+  root.classList.add('js');
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var lastY = window.scrollY, dir = 1;          // 1 = вниз, -1 = вверх
+  addEventListener('scroll', function () {
+    var y = window.scrollY;
+    if (y !== lastY) { dir = y > lastY ? 1 : -1; lastY = y; }
+  }, { passive: true });
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      var el = e.target;
+      if (e.isIntersecting) {
+        el.classList.remove('reveal--down', 'reveal--up');
+        el.classList.add(dir > 0 ? 'reveal--down' : 'reveal--up');
+        void el.offsetWidth;                     // применить стартовое положение
+        el.classList.add('is-in');
+        io.unobserve(el);          // показали один раз — больше не прячем,
+      }                            // иначе при возврате наверх всё мигает заново
+      else if (e.boundingClientRect.top < 0) {
+        // Пролистнули рывком и элемент проскочил экран — показываем без
+        // анимации. Иначе он остался бы невидимым навсегда.
+        el.classList.add('is-in');
+        io.unobserve(el);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '-8% 0px -8% 0px' });
+
+  document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+})();
+</script>
+
+<script src="js/i18n.js" defer></script>
+<script src="js/wires.js" defer></script>
+<script src="js/brain.js" defer></script>
+
+</body>
+</html>
