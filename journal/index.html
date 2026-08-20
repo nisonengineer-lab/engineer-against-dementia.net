@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Журнал — BeKavod</title>
+<meta name="description" content="Журнал событий системы BeKavod. Доступ только для владельца.">
+<meta name="theme-color" content="#12100E">
+<meta name="robots" content="noindex">
+
+<!-- Адрес API: пусто — тот же домен. Подробности в status/index.html -->
+<meta name="api-base" content="">
+<meta name="app-version" content="1.4.2">
+
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/journal.css">
+<link rel="stylesheet" href="../css/fault.css">
+</head>
+<body class="jrn-page">
+
+<!-- ==========================================================================
+     ЖУРНАЛ
+
+     Пока это только вёрстка: записи берутся из js/journal.js, там же
+     заглушка входа. Бэкенда нет.
+
+     ГЛАВНОЕ ПРО ДОСТУП. Размытие кадров — это оформление, а НЕ защита.
+     Всё, что пришло в браузер, можно достать. Поэтому анонимному
+     посетителю сервер вообще не должен отдавать ссылки на кадры: в
+     разметке у закрытых записей нет ни src, ни ссылки на файл — только
+     пустая рамка. Когда появится бэкенд, media обязан приходить лишь
+     авторизованному, иначе размытие бессмысленно.
+     ========================================================================== -->
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <a class="brand" href="../">
+      <span class="brand__mark">Be<span>Kavod</span></span>
+      <span class="brand__tag">журнал</span>
+    </a>
+
+    <nav class="topbar__nav" aria-label="Разделы">
+      <a href="../#how" data-sec>Как это работает</a>
+      <a href="../#privacy" data-sec>Приватность</a>
+      <a href="./" aria-current="page">Журнал</a>
+      <a href="../status/">Состояние</a>
+    </nav>
+
+    <div class="topbar__auth">
+      <span class="who" hidden>
+        <span class="who__dot" aria-hidden="true"></span>
+        <span class="who__name">—</span>
+      </span>
+      <button class="btn btn--ghost btn--sm" id="signin" type="button">Войти</button>
+      <button class="btn btn--ghost btn--sm" id="signout" type="button" hidden>Выйти</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap jrn">
+
+  <!-- Полоса состояния: видна только гостю -->
+  <div class="lockbar" id="lockbar">
+    <svg class="lockbar__i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor"
+            stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="4.5" y="10" width="15" height="10.5" rx="2.6" fill="currentColor" opacity=".9"/>
+    </svg>
+    <p class="lockbar__t">
+      <b>Журнал закрыт.</b>
+      Кадры, поиск и оценки видны только владельцу системы.
+      Ниже — то же, что видит посторонний: время и что произошло, без картинки.
+    </p>
+    <button class="btn btn--primary btn--sm" id="signin2" type="button">Войти</button>
+  </div>
+
+  <header class="jrn__head">
+    <h1>Журнал событий</h1>
+    <p class="jrn__sub">Свежие записи сверху. <span id="counter">—</span></p>
+  </header>
+
+  <!-- ---------- поиск и фильтры ---------- -->
+  <section class="filters" id="filters" aria-label="Поиск по журналу">
+    <div class="filters__row">
+      <label class="fld fld--grow">
+        <span class="fld__l">Поиск</span>
+        <input type="search" id="q" placeholder="калитка, ночь, лекарство…" autocomplete="off">
+      </label>
+      <label class="fld">
+        <span class="fld__l">С даты</span>
+        <input type="date" id="from">
+      </label>
+      <label class="fld">
+        <span class="fld__l">По дату</span>
+        <input type="date" id="to">
+      </label>
+      <button class="btn btn--ghost btn--sm" id="reset" type="button">Сбросить</button>
+    </div>
+
+    <div class="filters__row filters__row--chips">
+      <span class="fld__l">Тип записи</span>
+      <div class="chipset" id="kinds" role="group" aria-label="Тип записи"></div>
+    </div>
+
+    <!-- Гостю панель закрыта: поверх ложится накладка, поля отключаются -->
+    <div class="filters__veil" aria-hidden="true">
+      <span>Поиск и фильтры — после входа</span>
+    </div>
+  </section>
+
+  <!-- Место для карточки сбоя. Она встаёт вместо ленты, а не поверх неё:
+       пустой список с красной плашкой сверху читается как «записей нет»,
+       а это совсем другая новость, чем «мы не смогли их получить». -->
+  <div id="fault" hidden></div>
+
+  <!-- ---------- лента ---------- -->
+  <ol class="jrn__feed" id="feed"></ol>
+
+  <p class="empty" id="empty" hidden>По этим условиям записей нет.</p>
+
+  <!-- Полоса отмены после удаления. Живёт десять секунд: за это время
+       можно вернуть запись, дальше она уходит совсем. -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span class="toast__t">Запись удалена</span>
+    <button class="toast__undo" id="undo" type="button">Вернуть</button>
+    <span class="toast__bar" aria-hidden="true"></span>
+  </div>
+
+  <div class="more">
+    <button class="btn btn--ghost" id="more" type="button" hidden>
+      Показать ещё <span id="moreN"></span>
+    </button>
+    <p class="more__end" id="end" hidden>Это все записи.</p>
+  </div>
+</main>
+
+<footer class="foot foot--slim">
+  <div class="wrap foot__bot">
+    <span>© 2026 BeKavod · Явне, Израиль</span>
+    <a href="../status/">Состояние системы</a>
+    <a href="../">На главную</a>
+  </div>
+</footer>
+
+<!-- ==========================================================================
+     ОКНО ВХОДА
+     <dialog> взят намеренно: браузер сам делает подложку, ловушку фокуса
+     и закрытие по Esc — руками это пишется плохо и обычно с дырами.
+     ========================================================================== -->
+<dialog class="auth" id="auth" aria-labelledby="auth-h">
+  <form method="dialog" class="auth__box" id="authForm">
+    <button class="auth__x" value="cancel" aria-label="Закрыть">×</button>
+
+    <p class="eyebrow">Вход для владельца</p>
+    <h2 id="auth-h">Журнал вашего дома</h2>
+    <p class="auth__lead">Записи видит только тот, кто отвечает за человека.
+      Ни мы, ни кто-либо ещё доступа к ним не имеет.</p>
+
+    <label class="fld">
+      <span class="fld__l">Телефон или почта</span>
+      <input type="text" id="login" name="login" autocomplete="username"
+             placeholder="+972 54-000-0000" required>
+    </label>
+
+    <label class="fld">
+      <span class="fld__l">Пароль</span>
+      <input type="password" id="pass" name="pass" autocomplete="current-password"
+             placeholder="••••••••" required>
+    </label>
+
+    <p class="auth__err" id="authErr" hidden></p>
+
+    <div class="auth__go">
+      <button class="btn btn--primary" value="ok" type="submit">Войти</button>
+      <button class="btn btn--ghost" value="cancel" type="button" id="authCancel">Отмена</button>
+    </div>
+
+    <p class="auth__note">
+      Пока это заглушка: бэкенда нет, вход ничего не проверяет и нужен,
+      чтобы посмотреть, как журнал выглядит для владельца.
+    </p>
+  </form>
+</dialog>
+
+<script src="../js/api.js" defer></script>
+<script src="../js/fault.js" defer></script>
+<script src="../js/journal.js" defer></script>
+</body>
+</html>

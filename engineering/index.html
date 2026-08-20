@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Инженерия — BeKavod</title>
+<meta name="description" content="Как система BeKavod устроена внутри. Раздел готовится.">
+<meta name="theme-color" content="#12100E">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/journal.css">
+<link rel="stylesheet" href="../css/fault.css">
+</head>
+<body class="jrn-page">
+
+<!-- ==========================================================================
+     ИНЖЕНЕРИЯ — заглушка.
+
+     Раздел стоит в меню, а содержимого ещё нет. Молчаливая 404 в этом месте
+     читается как сломанный сайт: человек не понимает, он ошибся адресом или
+     тут всё развалилось. Поэтому страница честно говорит, что будет здесь,
+     и уводит туда, где смотреть есть что.
+
+     Когда раздел напишется — эта разметка заменяется целиком, ссылки в меню
+     и футере уже на месте и трогать их не придётся.
+     ========================================================================== -->
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <a class="brand" href="../">
+      <span class="brand__mark">Be<span>Kavod</span></span>
+      <span class="brand__tag">инженерия</span>
+    </a>
+    <nav class="topbar__nav" aria-label="Разделы">
+      <a href="../#how" data-sec>Как это работает</a>
+      <a href="../journal/">Журнал</a>
+      <a href="./" aria-current="page">Инженерия</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="soon">
+    <p class="soon__eyebrow"><i aria-hidden="true"></i>Раздел в работе</p>
+    <h1>Инженерия</h1>
+
+    <p class="soon__lead">
+      Здесь будет то, чего нет на главной: как система собрана изнутри —
+      без рекламы, с настоящими конфигами, замерами и списком того, что
+      не получилось.
+    </p>
+
+    <div class="soon__what">
+      <h2>Что появится на этой странице</h2>
+      <ul>
+        <li>Архитектура: камеры и радары → детекция → правила → оповещение</li>
+        <li>Почему обработка идёт дома, а не в облаке, и чем за это платишь</li>
+        <li>Распознавание поз и лиц: где оно ошибается и что с этим делать</li>
+        <li>Отдельно — провалившиеся ветки: что пробовал и почему отказался</li>
+      </ul>
+    </div>
+
+    <div class="soon__go">
+      <a class="btn btn--primary btn--sm" href="../">На главную</a>
+      <a class="btn btn--ghost btn--sm" href="../journal/">Посмотреть журнал</a>
+      <a class="btn btn--ghost btn--sm"
+         href="https://github.com/nisonengineer-lab" rel="noopener">Исходники</a>
+    </div>
+
+    <p class="soon__en">
+      <b>In English.</b> This section will document how the system is built:
+      local video and radar processing, on-device inference, alerting.
+      Not ready yet — the code is on
+      <a href="https://github.com/nisonengineer-lab" rel="noopener">GitHub</a>.
+    </p>
+  </section>
+</main>
+
+<footer class="foot foot--slim">
+  <div class="wrap foot__bot">
+    <span>© 2026 BeKavod · Явне, Израиль</span>
+    <a href="../status/">Состояние системы</a>
+    <a href="../">На главную</a>
+  </div>
+</footer>
+
+</body>
+</html>

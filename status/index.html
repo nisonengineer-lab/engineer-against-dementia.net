@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Состояние системы — BeKavod</title>
+<meta name="description" content="Проверка связи с системой BeKavod: где именно порвалась цепочка и что с этим делать.">
+<meta name="theme-color" content="#12100E">
+<meta name="robots" content="noindex">
+
+<!-- Адрес API. Пусто или отсутствует — тот же домен, что и сайт.
+     Когда бэкенд поедет за отдельный поддомен, меняется только эта строка:
+       <meta name="api-base" content="https://api.engineeragainstdementia.net">
+     Помните: другой домен = нужны заголовки CORS, иначе браузер не отдаст
+     странице даже те ответы, которые сервер честно прислал. -->
+<meta name="api-base" content="">
+<meta name="app-version" content="1.4.2">
+
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/journal.css">
+<link rel="stylesheet" href="../css/fault.css">
+</head>
+<body class="jrn-page">
+
+<!-- ==========================================================================
+     СОСТОЯНИЕ СИСТЕМЫ
+
+     Страница, которую открывают, когда «ничего не работает». Её задача —
+     не успокоить, а назвать причину. Поэтому она:
+       · проверяет всю цепочку, а не только последнее звено;
+       · показывает, чем именно доказан каждый вывод;
+       · даёт разное тем, кто пришёл: обычному человеку — что сделать,
+         владельцу — что посмотреть в консоли.
+
+     Сама страница не зависит от API: если сервера нет вовсе, она всё равно
+     откроется и всё равно объяснит.
+     ========================================================================== -->
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <a class="brand" href="../">
+      <span class="brand__mark">Be<span>Kavod</span></span>
+      <span class="brand__tag">состояние</span>
+    </a>
+
+    <nav class="topbar__nav" aria-label="Разделы">
+      <a href="../#how" data-sec>Как это работает</a>
+      <a href="../journal/">Журнал</a>
+      <a href="./" aria-current="page">Состояние</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap st">
+
+  <header class="st__head">
+    <h1>Что-то не работает. Смотрим, что именно</h1>
+    <p class="st__sub">
+      Проверяем путь целиком — от вашего устройства до коробки в доме.
+      Первое красное звено сверху и есть причина: всё, что ниже, ломается
+      уже из-за него.
+    </p>
+    <div class="st__bar">
+      <button class="btn btn--primary btn--sm" id="again" type="button">Проверить снова</button>
+      <span class="st__stamp" id="stamp">—</span>
+    </div>
+    <div id="simSlot"></div>
+  </header>
+
+  <!-- цепочка проверок -->
+  <ol class="chain" id="chain"></ol>
+
+  <!-- приговор: карточка сбоя или «всё работает» -->
+  <div id="verdict" hidden></div>
+
+  <!-- узлы внутри дома, если API до них дозвонилось -->
+  <section class="parts" id="parts" hidden>
+    <p class="parts__h">Что внутри дома</p>
+    <ul class="parts__grid" id="partsGrid"></ul>
+  </section>
+
+  <!-- ------------------------------------------------------------------
+       НАБОР СЦЕНАРИЕВ.
+       Бэкенда ещё нет, а поведение при аварии проверять надо — и не в
+       день аварии. Каждая ссылка подделывает конкретный отказ на уровне
+       сетевого слоя: страница проходит тот же путь, что и в жизни, и
+       выносит настоящий диагноз по поддельным данным.
+       ------------------------------------------------------------------ -->
+  <details class="scenes">
+    <summary>Проверка сценариев — как это выглядит при каждой поломке</summary>
+    <p class="scenes__note">
+      Ничего из этого не влияет на настоящую систему: подделывается только
+      ответ сервера внутри вкладки. Открывайте с телефона — так видно то же,
+      что увидит человек в шесть утра.
+    </p>
+    <div class="scenes__grid" id="scenes"></div>
+  </details>
+
+</main>
+
+<footer class="foot foot--slim">
+  <div class="wrap foot__bot">
+    <span>© 2026 BeKavod · Явне, Израиль</span>
+    <a href="../">На главную</a>
+  </div>
+</footer>
+
+<script src="../js/api.js" defer></script>
+<script src="../js/fault.js" defer></script>
+<script src="../js/status.js" defer></script>
+</body>
+</html>
