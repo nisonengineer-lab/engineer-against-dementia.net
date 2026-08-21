@@ -50,7 +50,10 @@
   /* Адрес API. Пусто — тот же origin, что и страница. Меняется одной
      строкой в <head>:  <meta name="api-base" content="https://api.…"> */
   var meta = document.querySelector('meta[name="api-base"]');
-  var BASE = (meta && meta.content ? meta.content : '').replace(/\/+$/, '');
+  /* ?api=http://10.0.0.6:8092 — проверить страницу против коробки в
+     локальной сети, не трогая разметку и не поднимая туннель. */
+  var qsBase = new URLSearchParams(location.search).get('api');
+  var BASE = (qsBase || (meta && meta.content) || '').replace(/\/+$/, '');
 
   /* Ждать дольше семи секунд бессмысленно: человек уже решил, что сломалось.
      Две попытки, а не три — иначе перед сообщением о сбое проходит
@@ -197,9 +200,12 @@
         ]
       });
     }
-    /* Бэкенда пока нет: на успешных сценариях отдаём пустой,
-       но правильный по форме ответ. Лента подставит тестовые записи. */
-    return '{"items":[],"nextCursor":null}';
+    /* Записи НЕ подделываются никогда. Если сценарий не про ошибку, а про
+       медленный или частично живой сервер — запрос уходит настоящему
+       серверу, и в ленте настоящие события. Выдуманная запись в журнале
+       ухода за человеком опаснее любого сбоя: по ней можно принять
+       решение, которого ничто в жизни не оправдывает. */
+    return null;
   }
 
   /* Подделка ответа для ?fail=… Возвращает Promise как настоящий fetch,
@@ -208,15 +214,8 @@
     if (!scene) return null;
     var wait = scene.ms || 60;
 
-    // Сценарий «только чтение»: GET проходит как обычно.
-    if (scene.writeOnly && method === 'GET') {
-      return new Promise(function (ok) {
-        setTimeout(function () {
-          ok(new Response(fakeBody(path), { status: 200,
-            headers: { 'content-type': 'application/json' } }));
-        }, 60);
-      });
-    }
+    // Сценарий «только чтение»: GET идёт настоящему серверу.
+    if (scene.writeOnly && method === 'GET') return null;
 
     if (scene.net === 'hang') {
       /* Соединение приняли и молчат. В жизни такой запрос убивает наш
@@ -251,6 +250,9 @@
                 message: scene.title,
                 requestId: 'r_sim_' + Math.random().toString(36).slice(2, 10) } })
             : fakeBody(path);
+      /* Успешный сценарий, а подделывать нечего — значит и не надо:
+         пропускаем запрос настоящему серверу. */
+      if (body === null && scene.status < 400) return null;
 
       var head = { 'content-type': scene.html ? 'text/html' : 'application/json' };
       if (scene.retryAfter) head['retry-after'] = String(scene.retryAfter);

@@ -157,6 +157,13 @@
            background:var(--good);box-shadow:0 0 0 3px rgba(12,163,12,.16)}
 .part--bad{border-color:rgba(208,59,59,.34)}
 .part--bad .part__led{background:var(--crit);box-shadow:0 0 0 3px rgba(208,59,59,.18)}
+/* Третье состояние: узел не проверяется. Не зелёный и не красный —
+   иначе одно из двух окажется враньём. */
+.part--unknown{border-style:dashed}
+.part--unknown .part__t{color:var(--ink-2)}
+.part--unknown .part__led{background:transparent;box-shadow:none;
+                          border:1px dashed var(--ink-3)}
+.part--unknown .part__d{color:var(--ink-3)}
 .part__d{margin:8px 0 0;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
 .part--bad .part__d{color:#E9A6A2}
 .part__ms{margin-inline-start:auto;font-family:var(--mono);font-size:11.5px;
@@ -238,6 +245,30 @@
 .jrn__wait.is-long{color:#E7CB8B}
 @keyframes jw-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.jrn__wait::before{animation:none}}
+
+/* --------------------------------------------------- настоящий кадр
+   Приходит из API по сессии. Пока не загрузился — под ним видна та же
+   рамка с зерном, что и у пустой записи, поэтому «дыры» на её месте нет. */
+.shot__img{position:absolute;inset:0;width:100%;height:100%;
+           object-fit:cover;display:block}
+.shot__play{z-index:2;text-decoration:none}
+.shot__play:hover{color:#fff}
+.shot__cam,.shot__dur{z-index:2}
+
+/* Пометка «закрыто по таймауту»: длительность здесь не измерена, а
+   упёрта в предел, и выдавать её за факт нельзя. */
+.tag-cap{padding:3px 9px;border-radius:999px;
+         font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
+         color:var(--ink-3);border:1px dashed var(--line-strong)}
+
+/* Полоса «пришло новое». Сама лента не дёргается: вставку делает человек,
+   иначе список уезжает под пальцем, а открытое подтверждение удаления
+   исчезает вместе с записью. */
+.newbar{display:block;width:100%;margin:18px 0 0;padding:11px 15px;
+        font:inherit;font-size:14.5px;color:#1A1409;cursor:pointer;
+        border:0;border-radius:11px;background:var(--accent);
+        box-shadow:0 0 18px rgba(240,168,104,.28)}
+.newbar:hover{background:var(--accent-hi)}
 
 /* ------------------------------------------- отказ одного действия
    Ошибка живёт в самой карточке: сломалось действие, а не страница. */

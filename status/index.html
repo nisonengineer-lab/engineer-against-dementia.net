@@ -8,12 +8,12 @@
 <meta name="theme-color" content="#12100E">
 <meta name="robots" content="noindex">
 
-<!-- Адрес API. Пусто или отсутствует — тот же домен, что и сайт.
-     Когда бэкенд поедет за отдельный поддомен, меняется только эта строка:
-       <meta name="api-base" content="https://api.engineeragainstdementia.net">
-     Помните: другой домен = нужны заголовки CORS, иначе браузер не отдаст
-     странице даже те ответы, которые сервер честно прислал. -->
-<meta name="api-base" content="">
+<!-- Адрес сервера журнала: аддон HA «Care Journal API», порт 8092,
+     наружу через cloudflared. Другой домен = нужны заголовки CORS, иначе
+     браузер не отдаст странице даже те ответы, которые сервер прислал.
+     Проверить против коробки в локальной сети, не правя файл:
+       /status/?api=http://10.0.0.6:8092 -->
+<meta name="api-base" content="https://api.engineeragainstdementia.net">
 <meta name="app-version" content="1.4.2">
 
 <link rel="stylesheet" href="../css/style.css">

@@ -240,7 +240,7 @@
 /* Полоска показывает, сколько осталось до момента, когда вернуть нельзя */
 .toast__bar{position:absolute;inset-block-end:0;inset-inline-start:0;
   height:2px;width:100%;background:var(--accent);transform-origin:left}
-.toast.is-out .toast__bar{animation:toastbar 10s linear forwards}
+.toast.is-out .toast__bar{animation:toastbar var(--life,10s) linear forwards}
 @keyframes toastbar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 
 /* ------------------------------------------------------------- подгрузка */

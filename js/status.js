@@ -167,8 +167,14 @@
     }
 
     /* API живо — дальше решают узлы */
+    /* У узла три состояния, а не два. ok:true — проверено и работает,
+       ok:false — проверено и лежит, ok:null — проверить нечем (например,
+       радары падения ещё не установлены). Считать «не проверено» за
+       «сломано» — это ложная тревога, а считать за «работает» — ложное
+       спокойствие. Поэтому третье состояние показываем отдельно. */
     var parts = (health && health.parts) || [];
-    var bad = parts.filter(function (p) { return !p.ok; });
+    var bad = parts.filter(function (p) { return p.ok === false; });
+    var unknown = parts.filter(function (p) { return p.ok == null; });
     showParts(parts);
 
     if (bad.length) {
@@ -195,7 +201,10 @@
       return;
     }
 
-    set('parts', 'is-ok', parts.length + ' из ' + parts.length + ' на связи');
+    var live = parts.length - unknown.length;
+    set('parts', 'is-ok', live + ' из ' + live + ' на связи' +
+        (unknown.length ? ' · не проверяется: ' +
+          unknown.map(function (p) { return p.name; }).join(', ') : ''));
     box.innerHTML =
       '<section class="fx fx--ok">' +
         '<div class="fx__head">' +
@@ -228,12 +237,15 @@
     var box = $('#parts');
     box.hidden = false;
     $('#partsGrid').innerHTML = parts.map(function (p) {
-      var d = p.ok ? (p.note || (p.ms != null ? 'отвечает за ' + p.ms + ' мс' : 'в порядке'))
-                   : (p.why || 'не отвечает') +
-                     (p.since ? ' · с ' + new Intl.DateTimeFormat('ru-RU',
-                       { hour: '2-digit', minute: '2-digit' })
-                       .format(new Date(p.since)) : '');
-      return '<li class="part' + (p.ok ? '' : ' part--bad') + '">' +
+      var cls = p.ok === false ? ' part--bad' : (p.ok == null ? ' part--unknown' : '');
+      var d = p.ok === true
+        ? (p.note || (p.ms != null ? 'отвечает за ' + p.ms + ' мс' : 'в порядке'))
+        : p.ok == null
+          ? (p.note || 'проверить нечем')
+          : (p.why || 'не отвечает') +
+            (p.since ? ' · с ' + new Intl.DateTimeFormat('ru-RU',
+              { hour: '2-digit', minute: '2-digit' }).format(new Date(p.since)) : '');
+      return '<li class="part' + cls + '">' +
         '<p class="part__t"><span class="part__led" aria-hidden="true"></span>' +
         esc(p.name) + '</p>' +
         '<p class="part__d">' + esc(d) + '</p></li>';
