@@ -34,13 +34,16 @@
   /* Запасной список типов — на случай, если /api/kinds не ответит.
      Совпадает с KINDS на сервере. */
   var KINDS = [
-    { id: 'exit',  label: 'Уход из дома', level: 'crit' },
-    { id: 'fall',  label: 'Падение',      level: 'crit' },
-    { id: 'night', label: 'Ночная активность', level: 'warn' },
-    { id: 'long',  label: 'Долгое отсутствие/неподвижность', level: 'warn' },
-    { id: 'meal',  label: 'Приём пищи',   level: 'ok' },
-    { id: 'meds',  label: 'Лекарства',    level: 'ok' },
-    { id: 'quiet', label: 'Спокойно',     level: 'ok' }
+    { id: 'exit',     label: 'Уход из дома', level: 'crit' },
+    { id: 'fall',     label: 'Падение',      level: 'crit' },
+    { id: 'unsteady', label: 'Шаткая походка', level: 'warn' },
+    { id: 'night',    label: 'Ночная активность', level: 'warn' },
+    { id: 'long',     label: 'Долгое отсутствие/неподвижность', level: 'warn' },
+    { id: 'toilet',   label: 'Туалет',       level: 'ok' },
+    { id: 'sleep',    label: 'Сон',          level: 'ok' },
+    { id: 'meal',     label: 'Приём пищи',   level: 'ok' },
+    { id: 'meds',     label: 'Лекарства',    level: 'ok' },
+    { id: 'quiet',    label: 'Спокойно',     level: 'ok' }
   ];
   var LVL = {
     crit: { t: 'Тревога',  c: 'crit' },
@@ -54,12 +57,10 @@
   }
   indexKinds();
 
-  /* Подписи к уликам. Сервер присылает пары {k, v}: k — что это за улика,
-     v — значение. Показываем словом, а не ключом. */
-  var EV_LABEL = {
-    confidence: 'уверенность', evidence: 'улика', zone: 'зона',
-    source: 'источник', detect: 'опознан', note: 'заметка'
-  };
+  /* Улики приходят парами {k, v}, где k — уже готовая русская подпись
+     («маршрут», «камера», «опознан»). Раньше здесь стоял словарь перевода
+     с английских ключей — он не совпадал с сервером, и подписи пропадали,
+     а список рисовался голыми значениями. */
 
   /* ------------------------------------------------------------- состояние */
   var state = {
@@ -150,7 +151,7 @@
              '</svg></span>';
     }
     var m = e.media;
-    var cam = evValue(e, 'source') || '';
+    var cam = evValue(e, 'камера') || '';
     var inner = '<span class="shot__grain"></span>' +
       (cam ? '<span class="shot__cam">' + esc(cam) + '</span>' : '');
 
@@ -185,9 +186,176 @@
   function evidenceHTML(e) {
     if (!e.evidence || !e.evidence.length) return '';
     return '<ul class="ev">' + e.evidence.map(function (x) {
-      var label = EV_LABEL[x.k];
-      return '<li>' + (label ? '<b>' + esc(label) + ':</b> ' : '') + esc(x.v) + '</li>';
+      return '<li><b>' + esc(x.k) + ':</b> ' + esc(x.v) + '</li>';
     }).join('') + '</ul>';
+  }
+
+  /* ====================================================== ответы шагов
+
+     Разбор идёт цепочкой отдельных запросов к модели, и каждый вопрос
+     задаётся только когда для него есть повод. Поэтому пустое поле здесь
+     значит «такой вопрос не задавали», и это НЕ то же самое, что «нет».
+     Разница видна глазом: спросили и получили «нет» — тег приглушённый;
+     не спрашивали — тега нет вовсе. Без этого нельзя понять, модель
+     ошиблась или её просто не спросили. */
+
+  /* «на чём» приходит в именительном: пол, диван, кровать. В строке нужен
+     предложный, иначе выходит «сидит на диван». Список короткий и закрытый —
+     это словарь зон, а не свободный текст. */
+  var ON_WHAT = {
+    'пол': 'полу', 'земля': 'земле', 'кровать': 'кровати', 'диван': 'диване',
+    'кресло': 'кресле', 'стул': 'стуле', 'унитаз': 'унитазе'
+  };
+  function onWhat(v) {
+    if (!v || v === 'не видно') return '';
+    return ' на ' + (ON_WHAT[v] || v);
+  }
+
+  function fact(cls, label, value) {
+    return '<span class="fact fact--' + cls + '">' +
+           '<b>' + esc(label) + '</b>' + esc(value) + '</span>';
+  }
+
+  function factsHTML(e) {
+    var f = e.facts;
+    if (!f) return '';
+    var out = [];
+
+    if (f.posture) {
+      out.push(fact(f.posture === 'лежит' ? 'warn' : 'on',
+                    'поза', f.posture + onWhat(f.onWhat)));
+    }
+    if (f.gait) out.push(fact('on', 'походка', f.gait));
+    if (f.gaitSupport && !/никто|ничего|нет/i.test(f.gaitSupport)) {
+      out.push(fact('on', 'опора', f.gaitSupport));
+    }
+    if (f.gaitRisk && f.gaitRisk !== 'норма') out.push(fact('warn', 'риск', f.gaitRisk));
+
+    if (f.sleeping === true) out.push(fact('on', 'сон', 'спит'));
+    else if (f.sleeping === false) out.push(fact('off', 'сон', 'не спит'));
+
+    if (f.fallen === true) {
+      out.push(fact('bad', 'падение', f.fallSurface ? 'упал на ' + f.fallSurface : 'упал'));
+    } else if (f.fallen === false) {
+      out.push(fact('off', 'падение', 'лёг сам'));
+    }
+
+    if (f.toilet) out.push(fact('on', 'туалет', f.toilet));
+
+    /* Еда, питьё и лекарства — три ответа одного шага. Порознь они дали бы
+       три приглушённых тега «не ест», «не пьёт», «без лекарств» почти на
+       каждой карточке. Поэтому положительные показываем по отдельности, а
+       сплошное «нет» сворачиваем в один тег. */
+    var meal = [];
+    if (f.eating === true) meal.push('ест');
+    if (f.drinking === true) meal.push('пьёт');
+    if (f.meds === true) meal.push('лекарства');
+    if (meal.length) out.push(fact('on', 'еда', meal.join(', ')));
+    else if (f.eating === false || f.drinking === false) {
+      out.push(fact('off', 'еда', 'не ест и не пьёт'));
+    }
+
+    return out.length ? '<p class="facts">' + out.join('') + '</p>' : '';
+  }
+
+  /* Почему выставлен именно такой уровень. Это вывод кода по ответам шагов,
+     а не мнение модели, — поэтому строка отдельная, а не среди улик. */
+  function reasonHTML(e) {
+    if (!e.dangerReason) return '';
+    var warn = e.level === 'crit' || e.level === 'warn';
+    return '<p class="why why--' + (warn ? 'warn' : 'ok') + '">' +
+      '<b>' + (warn ? 'Почему тревога:' : 'Оценка:') + '</b> ' +
+      esc(e.dangerReason) + '</p>';
+  }
+
+  /* ---- ответ одного шага человеческой строкой ----
+     Показывать сырой JSON нельзя: размечать по нему невозможно. Каждый шаг
+     знает, как рассказать о себе; незнакомый шаг (появится в будущем)
+     раскладывается парами ключ-значение, а не пропадает молча. */
+  function yn(v, yes, no) { return v === true ? yes : v === false ? no : null; }
+
+  function answerText(step) {
+    var a = step.answer || {}, p = [];
+    switch (step.step) {
+      case 'validate':
+        p.push(yn(a.subject_found, 'это он', 'это не он'));
+        p.push(a.match);
+        if (a.people_in_frame != null) p.push('людей в кадре: ' + a.people_in_frame);
+        p.push(a.quality);
+        break;
+      case 'gait':
+        p.push(yn(a.walks, 'идёт', 'стоит на месте'));
+        p.push(a.gait); p.push(a.speed);
+        if (a.support && !/никто|ничего|нет/i.test(a.support)) p.push('опора: ' + a.support);
+        if (a.risk && a.risk !== 'норма') p.push('риск: ' + a.risk);
+        break;
+      case 'posture':
+        p.push(a.posture + onWhat(a.on_what));
+        p.push(a.sure);
+        break;
+      case 'scene':
+        p.push(a.action);
+        if (a.objects && a.objects.length) p.push('предметы: ' + a.objects.join(', '));
+        break;
+      case 'sleep':
+        p.push(yn(a.sleeping, 'спит', 'не спит'));
+        p.push(a.sure);
+        if (a.eyes) p.push('глаза ' + a.eyes);
+        if (a.covered) p.push(a.covered);
+        break;
+      case 'fall':
+        p.push(yn(a.fallen, 'упал', 'лёг сам'));
+        if (a.surface && a.surface !== 'не видно') p.push('под ним ' + a.surface);
+        if (a.trying_to_get_up) p.push('пытается встать');
+        p.push(a.sure);
+        break;
+      case 'meal':
+        var m = [];
+        if (a.eating) m.push('ест');
+        if (a.drinking) m.push('пьёт');
+        if (a.meds) m.push('лекарства');
+        p.push(m.length ? m.join(', ') : 'не ест и не пьёт');
+        if (a.items && a.items.length) p.push('видит: ' + a.items.join(', '));
+        break;
+      case 'toilet_in':
+        p.push(yn(a.entered, 'зашёл в туалет', 'не заходил'));
+        p.push(a.sure);
+        break;
+      case 'toilet_out':
+        p.push(yn(a.exited, 'вышел из туалета', 'не выходил'));
+        if (a.steady) p.push('держится ' + a.steady);
+        p.push(a.sure);
+        break;
+      default:
+        Object.keys(a).forEach(function (k) {
+          var v = a[k];
+          if (v != null && v !== '' && typeof v !== 'object') p.push(k + ': ' + v);
+        });
+    }
+    return p.filter(Boolean).join(' · ');
+  }
+
+  /* Полный разбор под кнопкой. <details> взят намеренно: браузер сам делает
+     раскрытие, клавиатуру и доступность — руками это пишется хуже. */
+  function chainHTML(e) {
+    if (!state.authed || !e.chain || !e.chain.length) return '';
+    var rows = e.chain.map(function (s) {
+      if (s.failed) {
+        return '<li class="step step--fail"><b>' + esc(s.title) + '</b>' +
+               '<span class="step__t">не ответила</span></li>';
+      }
+      var note = (s.answer && s.answer.note) ? s.answer.note : '';
+      return '<li class="step"><b>' + esc(s.title) + '</b>' +
+        '<span class="step__t">' + (s.seconds != null ? s.seconds + ' с' : '') +
+        (s.frames ? ' · ' + s.frames + ' кадр.' : '') + '</span>' +
+        '<span class="step__a">' + esc(answerText(s)) + '</span>' +
+        (note ? '<span class="step__n">' + esc(note) + '</span>' : '') +
+        '</li>';
+    }).join('');
+    var n = e.stepsAsked || e.chain.length;
+    return '<details class="chain"><summary>Что спросили у модели' +
+      ' <span class="chain__n">' + n + '</span></summary>' +
+      '<ol class="chain__list">' + rows + '</ol></details>';
   }
 
   /* Кнопка «Переоценить». Это не оценка, а запрос на повторный разбор
@@ -252,7 +420,10 @@
               ? '<span class="tag-redo">на переоценке</span>' : '') +
           '</p>' +
           '<p class="entry__text">' + esc(e.text) + '</p>' +
+          factsHTML(e) +
+          reasonHTML(e) +
           evidenceHTML(e) +
+          chainHTML(e) +
           voteHTML(e) +
         '</div>' +
       '</article>' +
@@ -289,6 +460,7 @@
      врать, будто человек вышел из системы. */
   function paintChrome() {
     document.documentElement.classList.toggle('authed', state.authed);
+    if (nowBox && !state.authed) { nowBox.hidden = true; nowData = null; }
     $('#lockbar').hidden = state.authed;
     $('#signin').hidden = state.authed;
     $('#signout').hidden = !state.authed;
@@ -303,6 +475,73 @@
     document.querySelectorAll('#filters input, #filters button').forEach(function (el) {
       el.disabled = !state.authed;
     });
+  }
+
+  /* ================================================ где он сейчас
+
+     Журнал отвечает на вопрос «что было». Открывают его обычно ради
+     другого — «где он сейчас». Поэтому сверху отдельная панель: последнее
+     ПОДТВЕРЖДЁННОЕ появление человека в кадре.
+
+     Данные берутся из памяти системы (точка /api/last_seen). Она живёт
+     отдельно от журнала: одна строка, всегда перезаписываемая, обновляется
+     только когда модель подтвердила, что на кадрах именно он. Событие, где
+     его не нашли, память не трогает — иначе «где он» врало бы каждый раз,
+     когда мимо камеры прошёл кто-то другой.
+
+     Панель не опрашивает сервер часто: строка меняется не чаще, чем
+     человек переходит из комнаты в комнату. Раз в минуту пересчитываем
+     «сколько минут назад» на месте, а к серверу ходим раз в пять минут и
+     при появлении новых записей. */
+
+  var nowBox = $('#now');
+  var nowData = null;
+
+  function agoText(min) {
+    if (min == null) return '';
+    if (min < 1) return 'только что';
+    if (min < 60) return min + ' мин назад';
+    var h = Math.floor(min / 60);
+    if (h < 24) return h + ' ч назад';
+    return Math.floor(h / 24) + ' сут назад';
+  }
+
+  function paintNow() {
+    if (!nowBox) return;
+    // Гостю панель не показываем вовсе: сервер ему данных и не отдаёт.
+    if (!state.authed || !nowData || !nowData.known) { nowBox.hidden = true; return; }
+    var d = nowData;
+    var l = LVL[d.level] || LVL.ok;
+    var shot = d.media && d.media.poster
+      ? '<img class="now__img" src="' + esc(API.base + d.media.poster) +
+        '" alt="" loading="lazy" decoding="async" onerror="this.remove()">'
+      : '';
+    var line = [d.where, d.posture].filter(Boolean).join(', ');
+    var extra = [];
+    if (d.sleeping) extra.push('спит');
+    if (d.toilet) extra.push('туалет: ' + d.toilet);
+    if (d.action) extra.push(d.action);
+
+    nowBox.innerHTML =
+      '<div class="now__shot">' + shot + '</div>' +
+      '<div class="now__body">' +
+        '<p class="now__eyebrow">Где он сейчас' +
+          '<span class="lvl lvl--' + l.c + '">' + l.t + '</span></p>' +
+        '<p class="now__line">' + esc(line || 'вне зон') +
+          '<span class="now__ago">' + esc(agoText(d.agoMinutes)) + '</span></p>' +
+        (extra.length ? '<p class="now__extra">' + esc(extra.join(' · ')) + '</p>' : '') +
+      '</div>';
+    nowBox.className = 'now now--' + l.c;
+    nowBox.hidden = false;
+  }
+
+  function loadNow() {
+    if (!state.authed) { if (nowBox) nowBox.hidden = true; return Promise.resolve(); }
+    // tries:1 — панель второстепенна. Не ответила, значит её просто нет;
+    // поднимать из-за неё карточку сбоя поверх живой ленты незачем.
+    return API.get('/api/last_seen', { tries: 1 }).then(function (r) {
+      nowData = r.data; paintNow();
+    }, function () { /* молчим: лента важнее */ });
   }
 
   /* ============================================================== загрузка */
@@ -392,6 +631,7 @@
 
         state.items = more ? state.items.concat(collected) : collected;
         render();
+        if (!more) loadNow();
         if (slowest > 2500) slowNote(slowest);
       })
       .catch(function (err) {
@@ -771,7 +1011,18 @@
       var m = Math.max(1, Math.round((Date.now() - ms(ev.startedAt)) / 60000));
       el.lastChild.textContent = 'идёт ' + human(m);
     });
+    // «12 минут назад» стареет само по себе — пересчитываем на месте,
+    // не тревожа сервер.
+    if (nowData && nowData.known && nowData.agoMinutes != null) {
+      nowData.agoMinutes++;
+      paintNow();
+    }
   }, 60000);
+
+  /* Свериться с сервером раз в пять минут: реже, чем человек ходит по дому,
+     чаще нет смысла — строка меняется только с новым подтверждённым
+     появлением, а о нём и так придёт событие в поток. */
+  setInterval(loadNow, 300000);
 
   /* ------------------------------------------------------- живые события
      Сервер держит поток SSE и присылает новые записи по мере появления.
@@ -798,7 +1049,7 @@
     try { es = new EventSource(API.base + '/api/events/stream',
                               { withCredentials: true }); }
     catch (e) { return; }
-    es.addEventListener('created', function () { fresh++; liveBar(); });
+    es.addEventListener('created', function () { fresh++; liveBar(); loadNow(); });
     // Обрыв EventSource переподключает сам; молчим, чтобы не пугать зря.
     es.onerror = function () {};
   }

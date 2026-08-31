@@ -172,6 +172,90 @@
        border:1px solid var(--line);
        font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
 
+
+/* =============================================== где он сейчас
+   Не событие, а состояние. Стоит выше ленты и выглядит иначе, чем
+   карточки: иначе глаз читает его как «ещё одну запись сверху». */
+.now{display:grid;grid-template-columns:104px 1fr;gap:16px;align-items:center;
+     margin:0 0 22px;padding:14px 18px 14px 14px;border-radius:16px;
+     background:var(--surface);border:1px solid var(--line-strong)}
+.now--warn{border-color:rgba(250,178,25,.4);background:rgba(250,178,25,.05)}
+.now--crit{border-color:rgba(208,59,59,.45);background:rgba(208,59,59,.06)}
+.now__shot{aspect-ratio:4/3;border-radius:10px;overflow:hidden;
+           background:var(--surface-2);border:1px solid var(--line)}
+.now__img{width:100%;height:100%;object-fit:cover;display:block}
+.now__eyebrow{display:flex;align-items:center;gap:10px;margin:0;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3)}
+.now__line{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+           margin:6px 0 0;font-size:19px;font-weight:600;color:var(--ink)}
+.now__ago{font-size:13px;font-weight:400;color:var(--ink-2)}
+.now__extra{margin:4px 0 0;font-size:13.5px;line-height:1.4;color:var(--ink-2)}
+
+/* =============================================== ответы шагов цепочки
+   Тег «приглушённый» — это не украшение. Вопрос модели задали, и она
+   ответила «нет»; отсутствие тега значит, что вопрос не задавали вовсе.
+   Разница нужна глазом, иначе по журналу не понять, ошиблась модель или
+   её просто не спросили. */
+.facts{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 0}
+.fact{display:inline-flex;align-items:baseline;gap:6px;
+      padding:5px 10px;border-radius:999px;font-size:12.5px;
+      border:1px solid var(--line);background:var(--surface-2);color:var(--ink)}
+.fact b{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+        text-transform:uppercase;font-weight:600;color:var(--ink-3)}
+.fact--warn{border-color:rgba(250,178,25,.38);background:rgba(250,178,25,.09);
+            color:#F3C765}
+.fact--warn b{color:rgba(243,199,101,.7)}
+.fact--bad{border-color:rgba(208,59,59,.45);background:rgba(208,59,59,.11);
+           color:#F0908C}
+.fact--bad b{color:rgba(240,144,140,.7)}
+.fact--off{opacity:.5}
+
+/* Почему выставлен уровень. Это вывод кода по ответам шагов, а не слова
+   модели, — поэтому отдельной строкой, а не среди улик. */
+.why{margin:12px 0 0;padding:9px 12px;border-radius:9px;font-size:13.5px;
+     line-height:1.45;background:var(--surface-2);border:1px solid var(--line);
+     color:var(--ink-2)}
+.why b{color:var(--ink-2)}
+.why--warn{background:rgba(250,178,25,.07);border-color:rgba(250,178,25,.28);
+           color:var(--ink)}
+.why--warn b{color:#F3C765}
+
+/* Полный разбор. Свёрнут: в ленте он не нужен, а при разметке нужен весь. */
+.chain{margin:14px 0 0}
+.chain>summary{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  padding:6px 12px;border-radius:8px;font-size:12.5px;color:var(--ink-2);
+  background:var(--surface-2);border:1px solid var(--line);
+  list-style:none;user-select:none}
+.chain>summary::-webkit-details-marker{display:none}
+.chain>summary::before{content:"▸";font-size:10px;color:var(--ink-3)}
+.chain[open]>summary::before{content:"▾"}
+.chain>summary:hover{color:var(--ink);border-color:var(--line-strong)}
+.chain__n{font-family:var(--mono);font-size:11px;padding:1px 7px;
+  border-radius:999px;background:rgba(240,168,104,.14);color:var(--accent)}
+.chain__list{margin:10px 0 0;padding:0 0 0 2px;list-style:none;
+  display:grid;gap:2px}
+.step{display:grid;grid-template-columns:minmax(120px,auto) 1fr;
+      gap:4px 14px;padding:8px 10px;border-radius:8px;
+      font-size:13px;line-height:1.4;background:var(--surface-2)}
+.step:nth-child(odd){background:transparent}
+.step>b{font-weight:600;color:var(--ink)}
+.step__t{font-family:var(--mono);font-size:11px;color:var(--ink-3);
+         grid-column:2;justify-self:end;margin-top:-18px}
+.step__a{grid-column:2;grid-row:1;color:var(--ink-2);padding-inline-end:70px}
+.step__n{grid-column:2;font-size:12px;color:var(--ink-3);font-style:italic}
+.step--fail{color:#F0908C}
+.step--fail .step__t{color:rgba(240,144,140,.7);margin-top:0}
+
+@media (max-width:640px){
+  .now{grid-template-columns:76px 1fr;gap:12px;padding:12px}
+  .now__line{font-size:17px}
+  .step{grid-template-columns:1fr;gap:2px}
+  .step__a,.step__t,.step__n{grid-column:1}
+  .step__a{grid-row:auto;padding-inline-end:0}
+  .step__t{justify-self:start;margin-top:0}
+}
+
 /* ------------------------------------------------------------------ оценка */
 .acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
       margin-block-start:16px}

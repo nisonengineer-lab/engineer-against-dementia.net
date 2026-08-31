@@ -13,11 +13,11 @@
      через cloudflared. Проверить против коробки в локальной сети можно
      без правки файла:  /journal/?api=http://10.0.0.6:8092 -->
 <meta name="api-base" content="https://api.engineeragainstdementia.net">
-<meta name="app-version" content="1.4.2">
+<meta name="app-version" content="1.5.0">
 
-<link rel="stylesheet" href="../css/style.css">
-<link rel="stylesheet" href="../css/journal.css">
-<link rel="stylesheet" href="../css/fault.css">
+<link rel="stylesheet" href="../css/style.css?v=2">
+<link rel="stylesheet" href="../css/journal.css?v=3">
+<link rel="stylesheet" href="../css/fault.css?v=2">
 </head>
 <body class="jrn-page">
 
@@ -77,6 +77,12 @@
     </p>
     <button class="btn btn--primary btn--sm" id="signin2" type="button">Войти</button>
   </div>
+
+  <!-- Где он сейчас. Не событие, а состояние: последнее подтверждённое
+       появление человека в кадре. Стоит выше ленты, потому что ради этого
+       вопроса журнал чаще всего и открывают. Гостю не показывается —
+       сервер ему этих данных не отдаёт вовсе. -->
+  <section class="now" id="now" hidden aria-live="polite"></section>
 
   <header class="jrn__head">
     <h1>Журнал событий</h1>
@@ -186,8 +192,8 @@
   </form>
 </dialog>
 
-<script src="../js/api.js" defer></script>
-<script src="../js/fault.js" defer></script>
-<script src="../js/journal.js" defer></script>
+<script src="../js/api.js?v=2" defer></script>
+<script src="../js/fault.js?v=2" defer></script>
+<script src="../js/journal.js?v=3" defer></script>
 </body>
 </html>
