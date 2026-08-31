@@ -1,4 +1,13 @@
+# Индексируем только лендинг. Журнал, состояние системы и разделы в
+# работе — не для поиска: там либо личные записи за логином, либо
+# служебная диагностика. На самих страницах стоит ещё и meta noindex,
+# потому что robots.txt — это просьба, а не запрет.
 User-agent: *
-Allow: /
+Allow: /$
+Disallow: /journal/
+Disallow: /status/
+Disallow: /engineering/
+Disallow: /video/
+Disallow: /docs/
 
 Sitemap: https://engineeragainstdementia.net/sitemap.xml

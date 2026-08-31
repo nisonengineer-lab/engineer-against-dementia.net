@@ -192,8 +192,6 @@
              'попадать в журнал, а тревоги — не приходить.',
         hint: ['Записи за прошлое доступны как обычно.',
                'Если через десять минут не поднимется — перезапустите коробку.'],
-        ops: ['docker compose ps', 'docker compose restart frigate',
-              'systemctl status mosquitto'],
         tech: { url: API.base + '/api/health', method: 'GET',
                 status: 200, kind: 'degraded', when: new Date().toISOString(),
                 page: location.href, agent: navigator.userAgent }
@@ -252,8 +250,24 @@
     }).join('');
   }
 
-  /* -------------------------------------------------------- сценарии */
+  /* -------------------------------------------------------- сценарии
+     Инструмент для проверки, а не часть сайта. Обычному посетителю он
+     не нужен и только путает: половина карточек называется «туннель
+     отвалился». Показываем по явному ?dev=1. */
   (function scenes() {
+    var box = document.querySelector('.scenes');
+    if (!/[?&]dev=1/.test(location.search)) {
+      if (box) box.remove();
+      if (API.simulated) {
+        var w = document.createElement('div');
+        w.className = 'wire-note';
+        w.innerHTML = '<b>Это имитация.</b> Сценарий <code>?fail=' +
+          esc(API.sim) + '</code>. <a href="./">Настоящая проверка</a> · ' +
+          '<a href="?dev=1">все сценарии</a>';
+        $('#simSlot').appendChild(w);
+      }
+      return;
+    }
     var grid = $('#scenes');
     var html = '<a class="scene" href="./"' +
       (API.simulated ? '' : ' aria-current="true"') +

@@ -8,18 +8,14 @@
    если их попросили: обычному человеку номер запроса не нужен, а вот
    владельцу без него не разобраться.
 
-   Команды для консоли (ops) показываем только владельцу. Не из
-   секретности — их всё равно можно подсмотреть в исходниках, — а потому
-   что человеку, который просто хочет посмотреть журнал, docker compose
-   в лицо бросать незачем.
+   Команд для консоли здесь нет намеренно. Репозиторий сайта публичный,
+   и «показать только владельцу» на клиенте не прячет ничего: подсказки
+   вида «перезапустите такой-то сервис» видны в исходниках всем, а вместе
+   с ними — карта внутренностей дома. Что смотреть при каждом коде сбоя,
+   лежит в docs/api-journal.md, который в репозиторий не уходит.
    ========================================================================== */
 (function () {
   'use strict';
-
-  var OWNER = 'bekavod.demo.session';
-  function isOwner() {
-    try { return localStorage.getItem(OWNER) === '1'; } catch (e) { return false; }
-  }
 
   var WHERE = {
     device: 'у вас на устройстве',
@@ -81,7 +77,6 @@
 
   function html(d, opt) {
     opt = opt || {};
-    var owner = isOwner();
     var acts = '';
     if (d.retry !== false) {
       acts += '<button class="btn btn--primary btn--sm" data-fx-retry type="button">' +
@@ -118,13 +113,8 @@
       (acts ? '<div class="fx__acts">' + acts + '</div>' : '') +
 
       '<details class="fx__more">' +
-        '<summary>Подробности' + (owner ? ' и что проверить' : '') + '</summary>' +
+        '<summary>Подробности</summary>' +
         '<dl class="fx__tech">' + techRows(d.tech || {}) + '</dl>' +
-        (owner && d.ops && d.ops.length
-          ? '<p class="fx__ops-h">Проверить на хосте</p><ul class="fx__ops">' +
-            d.ops.map(function (o) { return '<li><code>' + esc(o) + '</code></li>'; }).join('') +
-            '</ul>'
-          : '') +
         '<button class="btn btn--ghost btn--sm" data-fx-copy type="button">' +
           'Скопировать отчёт</button>' +
       '</details>' +
@@ -178,5 +168,5 @@
     document.body.removeChild(ta);
   }
 
-  window.Fault = { html: html, mount: mount, report: report, isOwner: isOwner };
+  window.Fault = { html: html, mount: mount, report: report };
 })();
