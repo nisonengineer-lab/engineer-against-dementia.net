@@ -505,7 +505,12 @@
   }
 
   function entryHTML(e, withDay) {
-    var k = kindById[e.kind] || { label: e.kind };
+    /* Видов записи может быть несколько: дед вышел из туалета и тут же сел
+       есть — это и «туалет», и «приём пищи». Показываем все, в порядке
+       важности, как их прислал сервер. Старый сервер шлёт одно поле kind —
+       тогда список из него и получается. */
+    var kinds = (e.kinds && e.kinds.length ? e.kinds : (e.kind ? [e.kind] : []))
+      .map(function (id) { return (kindById[id] || { label: id }).label; });
     var l = LVL[e.level] || LVL.ok;
     return '<li class="entry' + (e.ongoing ? ' entry--live' : '') +
       '" data-id="' + esc(e.id) + '">' +
@@ -519,7 +524,9 @@
           '<p class="entry__top">' +
             whenHTML(e) +
             '<span class="lvl lvl--' + l.c + '">' + l.t + '</span>' +
-            '<span class="kind">' + esc(k.label) + '</span>' +
+            kinds.map(function (label) {
+              return '<span class="kind">' + esc(label) + '</span>';
+            }).join('') +
             (e.recheck && e.recheck.state === 'queued'
               ? '<span class="tag-redo">на переоценке</span>' : '') +
           '</p>' +

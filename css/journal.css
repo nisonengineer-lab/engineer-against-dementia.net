@@ -203,6 +203,10 @@
 .lvl--ok{color:#8FC98F;background:rgba(12,163,12,.12);border-color:rgba(12,163,12,.3)}
 .kind{font-family:var(--mono);font-size:12px;letter-spacing:.08em;
       text-transform:uppercase;color:var(--ink-3)}
+/* Видов записи у события может быть несколько: вышел из туалета и сел есть.
+   Без разделителя «ТУАЛЕТ ПРИЁМ ПИЩИ» читается как один длинный ярлык. */
+.kind + .kind::before{content:"|";margin-inline-end:9px;
+  color:var(--line-strong);font-weight:400}
 
 .ev{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0;padding:0;list-style:none}
 .ev li{padding:5px 10px;border-radius:7px;background:var(--surface-2);
