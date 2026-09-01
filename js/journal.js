@@ -164,9 +164,12 @@
         '" alt="Кадр события" loading="lazy" decoding="async" ' +
         'onerror="this.remove()">';
     }
-    if (m.type === 'video' && m.clip) {
-      inner += '<a class="shot__play" href="' + esc(API.base + m.clip) +
-        '" target="_blank" rel="noopener" title="Открыть запись">▶</a>' +
+    if (m.type === 'video' && (m.preview || m.clip)) {
+      /* Кнопка, а не ссылка в новую вкладку. Вкладка отдавала браузеру
+         голый файл с камеры: с уличной камеры это HEVC, которого
+         десктопный Chrome не умеет вовсе, да ещё до ста мегабайт. */
+      inner += '<button class="shot__play" type="button" data-play ' +
+        'title="Смотреть здесь">▶</button>' +
         '<span class="shot__dur">видео</span>';
     } else if (m.type === 'photo') {
       inner += '<span class="shot__dur">кадр</span>';
@@ -174,6 +177,47 @@
       inner += '<span class="shot__dur">без кадра</span>';
     }
     return '<div class="shot">' + inner + '</div>';
+  }
+
+  function mb(bytes) {
+    if (!bytes) return '';
+    return bytes >= 1e9 ? (bytes / 1e9).toFixed(1) + ' ГБ'
+                        : Math.round(bytes / 1e6) + ' МБ';
+  }
+
+  /* Плеер встаёт на место кадра по нажатию, а не грузится вместе с лентой:
+     двадцать карточек с preload='auto' — это двадцать запросов на видео
+     сразу при открытии журнала.
+
+     Играем ЛЁГКУЮ копию (m.preview): H.264, узкая, без звука, в 10-15 раз
+     меньше оригинала. Оригинал остаётся ссылкой под кадром — он с камеры
+     как есть, в полном разрешении.
+
+     Если лёгкой копии нет (событие снято до 2.3.2), деваться некуда — даём
+     оригинал и честно пишем, сколько он весит. Он ещё и может не открыться:
+     HEVC десктопные браузеры не декодируют. Поэтому у video висит onerror,
+     который вместо чёрного прямоугольника скажет, что случилось. */
+  function videoHTML(e) {
+    var m = e.media || {};
+    var src = m.preview || m.clip;
+    return '<video class="vid" controls autoplay playsinline preload="auto"' +
+      (m.poster ? ' poster="' + esc(API.base + m.poster) + '"' : '') +
+      ' src="' + esc(API.base + src) + '"' +
+      ' onerror="this.closest(\'.entry__media\').classList.add(\'is-broken\')">' +
+      '</video>' +
+      '<p class="vid__no">Браузер не открывает эту запись — она с камеры ' +
+      'в HEVC. Скачайте оригинал ссылкой под кадром.</p>';
+  }
+
+  /* Строка под кадром: чем именно вы сейчас смотрите и где взять оригинал. */
+  function origHTML(e) {
+    var m = e.media || {};
+    if (!state.authed || !m.clip) return '';
+    var size = mb(m.clipBytes);
+    return '<p class="entry__orig">' +
+      (m.preview ? '<span class="entry__orig-l">лёгкая копия</span> · ' : '') +
+      '<a href="' + esc(API.base + m.clip) + '" target="_blank" rel="noopener">' +
+      'оригинал' + (size ? ' ' + size : '') + '</a></p>';
   }
 
   /* ------- чистка записи, пришедшей с сервера -------
@@ -440,7 +484,10 @@
       '" data-id="' + esc(e.id) + '">' +
       (withDay ? '<p class="entry__day">' + dayLabel(ms(e.startedAt)) + '</p>' : '') +
       '<article class="entry__in">' +
-        '<div class="entry__media">' + mediaHTML(e) + '</div>' +
+        '<div class="entry__left">' +
+          '<div class="entry__media">' + mediaHTML(e) + '</div>' +
+          origHTML(e) +
+        '</div>' +
         '<div class="entry__body">' +
           '<p class="entry__top">' +
             whenHTML(e) +
@@ -810,6 +857,26 @@
      стаб — значит запись пометится, но модель по ней ещё не прогонится.
      Врать кнопкой об этом не будем, когда воркер появится — ничего в
      разметке менять не придётся. */
+  /* Нажали ▶ — кадр уступает место плееру. Обратно не возвращаем: человек
+     нажал смотреть, а не «мигни видео». */
+  feed.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-play]');
+    if (!b) return;
+    var li = b.closest('.entry');
+    var ev = byId(li.dataset.id);
+    if (!ev || !ev.media) return;
+    var box = li.querySelector('.entry__media');
+    // Класс на всей карточке, а не только на рамке: пока идёт запись,
+    // колонка с кадром раздвигается — в 260 пикселей смотреть нечего.
+    li.classList.add('is-playing');
+    box.classList.add('is-playing');
+    box.innerHTML = videoHTML(ev);
+    var v = box.querySelector('video');
+    // Автозапуск браузер может и не разрешить — тогда просто останется
+    // плеер с кнопкой, это нормально и ломать ничего не должно.
+    if (v && v.play) { var go = v.play(); if (go && go.catch) go.catch(function () {}); }
+  });
+
   feed.addEventListener('click', function (e) {
     var b = e.target.closest('[data-recheck]');
     if (!b || b.disabled) return;

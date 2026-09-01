@@ -103,8 +103,43 @@
            gap:22px;padding:16px;
            border:1px solid var(--line);border-radius:16px;
            background:var(--surface)}
+.entry__left{min-width:0}
+
+/* Пока идёт запись, колонка с кадром раздвигается: 260 пикселей хватает
+   рамке-превью, но не просмотру. Только на широком экране — на узком
+   колонка и так одна, и раздвигать нечего.
+
+   Медиазапрос здесь обязателен, а не «на всякий случай»: у правила из
+   мобильной секции ниже специфичность меньше (.entry__in против
+   .entry.is-playing .entry__in), и оно бы проиграло — карточка на телефоне
+   уезжала бы вбок вместе с текстом. */
+@media (min-width:641px){
+  .entry.is-playing .entry__in{grid-template-columns:minmax(0,440px) 1fr}
+}
 .entry__media{position:relative;aspect-ratio:16/10;border-radius:11px;
               overflow:hidden;background:#0E0C0A}
+
+/* ------------------------------------------------- запись на месте
+   Видео играет в карточке, а не в новой вкладке: во вкладку уходил файл
+   с камеры как есть — до ста мегабайт, а с уличной камеры ещё и HEVC,
+   которого десктопный браузер не умеет. Плеер встаёт на место кадра по
+   нажатию и занимает ту же рамку. */
+.vid{position:absolute;inset:0;width:100%;height:100%;
+     object-fit:contain;background:#000;display:block}
+.vid__no{display:none}
+/* Плеер сказал, что не может это показать. Чёрный прямоугольник без
+   объяснения читается как поломка сайта, поэтому объясняем. */
+.entry__media.is-broken .vid{display:none}
+.entry__media.is-broken .vid__no{display:block;margin:0;padding:14px;
+  font-size:12.5px;line-height:1.45;color:var(--ink-2)}
+
+/* Чем именно вы сейчас смотрите и где взять полное. Мелко и приглушённо:
+   в девяти случаях из десяти лёгкой копии достаточно. */
+.entry__orig{margin:8px 0 0;font-size:11.5px;line-height:1.4;color:var(--ink-3)}
+.entry__orig-l{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase}
+.entry__orig a{color:var(--ink-2);text-underline-offset:2px}
+.entry__orig a:hover{color:var(--accent)}
 
 /* Рамка кадра. Настоящий постер придёт из Frigate; пока рисуем ночной
    кадр средствами CSS, чтобы ничего не выдумывать картинкой. */
@@ -120,7 +155,11 @@
   text-transform:uppercase;color:rgba(245,240,232,.5)}
 .shot__play{position:absolute;inset:0;display:grid;place-items:center;
   font-size:20px;color:rgba(245,240,232,.85);
-  text-shadow:0 2px 20px rgba(0,0,0,.8)}
+  text-shadow:0 2px 20px rgba(0,0,0,.8);
+  /* это <button>, а не ссылка: сбрасываем всё, что рисует браузер */
+  appearance:none;border:0;background:transparent;padding:0;cursor:pointer;
+  font-family:inherit}
+.shot__play:hover{color:#fff}
 .shot__dur{position:absolute;inset-block-end:9px;inset-inline-end:11px;
   padding:3px 7px;border-radius:5px;background:rgba(10,9,8,.72);
   font-family:var(--mono);font-size:11px;color:rgba(245,240,232,.8)}
