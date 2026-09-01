@@ -258,11 +258,15 @@
   }
 
   /* Почему выставлен именно такой уровень. Это вывод кода по ответам шагов,
-     а не мнение модели, — поэтому строка отдельная, а не среди улик. */
+     а не мнение модели, — поэтому строка отдельная, а не среди улик.
+
+     Класс называется entry__why, а не why: журнал грузит и style.css главной,
+     где .why — экран во всю высоту окна. Короткое имя совпадало, и строка
+     раздувалась в пустой блок на пол-экрана. */
   function reasonHTML(e) {
     if (!e.dangerReason) return '';
     var warn = e.level === 'crit' || e.level === 'warn';
-    return '<p class="why why--' + (warn ? 'warn' : 'ok') + '">' +
+    return '<p class="entry__why entry__why--' + (warn ? 'warn' : 'ok') + '">' +
       '<b>' + (warn ? 'Почему тревога:' : 'Оценка:') + '</b> ' +
       esc(e.dangerReason) + '</p>';
   }
@@ -335,26 +339,35 @@
   }
 
   /* Полный разбор под кнопкой. <details> взят намеренно: браузер сам делает
-     раскрытие, клавиатуру и доступность — руками это пишется хуже. */
+     раскрытие, клавиатуру и доступность — руками это пишется хуже.
+
+     Здесь же служебная сводка (маршрут | поза | отметки шагов | действие).
+     Наверху карточки ей не место: там человек читает, что произошло, а не
+     разбирает машинную строку с палками. Раскрыл разбор — увидел её целиком. */
   function chainHTML(e) {
-    if (!state.authed || !e.chain || !e.chain.length) return '';
-    var rows = e.chain.map(function (s) {
+    if (!state.authed) return '';
+    var chain = e.chain || [];
+    if (!chain.length && !e.summary) return '';
+    var sum = e.summary
+      ? '<p class="qa__sum">' + esc(e.summary) + '</p>' : '';
+    var rows = chain.map(function (s) {
       if (s.failed) {
-        return '<li class="step step--fail"><b>' + esc(s.title) + '</b>' +
-               '<span class="step__t">не ответила</span></li>';
+        return '<li class="qa__row qa__row--fail"><b>' + esc(s.title) + '</b>' +
+               '<span class="qa__ans">не ответила</span></li>';
       }
       var note = (s.answer && s.answer.note) ? s.answer.note : '';
-      return '<li class="step"><b>' + esc(s.title) + '</b>' +
-        '<span class="step__t">' + (s.seconds != null ? s.seconds + ' с' : '') +
+      return '<li class="qa__row"><b>' + esc(s.title) + '</b>' +
+        '<span class="qa__cost">' + (s.seconds != null ? s.seconds + ' с' : '') +
         (s.frames ? ' · ' + s.frames + ' кадр.' : '') + '</span>' +
-        '<span class="step__a">' + esc(answerText(s)) + '</span>' +
-        (note ? '<span class="step__n">' + esc(note) + '</span>' : '') +
+        '<span class="qa__ans">' + esc(answerText(s)) + '</span>' +
+        (note ? '<span class="qa__note">' + esc(note) + '</span>' : '') +
         '</li>';
     }).join('');
-    var n = e.stepsAsked || e.chain.length;
-    return '<details class="chain"><summary>Что спросили у модели' +
-      ' <span class="chain__n">' + n + '</span></summary>' +
-      '<ol class="chain__list">' + rows + '</ol></details>';
+    var n = e.stepsAsked || chain.length;
+    return '<details class="qa"><summary>Что спросили у модели' +
+      ' <span class="qa__n">' + n + '</span></summary>' + sum +
+      (rows ? '<ol class="qa__list">' + rows + '</ol>' : '') +
+      '</details>';
   }
 
   /* Кнопка «Переоценить». Это не оценка, а запрос на повторный разбор

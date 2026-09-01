@@ -212,48 +212,71 @@
 .fact--off{opacity:.5}
 
 /* Почему выставлен уровень. Это вывод кода по ответам шагов, а не слова
-   модели, — поэтому отдельной строкой, а не среди улик. */
-.why{margin:12px 0 0;padding:9px 12px;border-radius:9px;font-size:13.5px;
+   модели, — поэтому отдельной строкой, а не среди улик.
+
+   Имя с приставкой entry__ взято не для красоты. Журнал грузит и style.css
+   главной страницы, а там .why — экран «Почему BeKavod» во всю высоту окна
+   (min-height до 940px, display:flex). Короткое имя совпало, и строка
+   «Почему тревога» раздувалась в пустой блок на пол-экрана. */
+.entry__why{margin:12px 0 0;padding:9px 12px;border-radius:9px;font-size:13.5px;
      line-height:1.45;background:var(--surface-2);border:1px solid var(--line);
      color:var(--ink-2)}
-.why b{color:var(--ink-2)}
-.why--warn{background:rgba(250,178,25,.07);border-color:rgba(250,178,25,.28);
+.entry__why b{color:var(--ink-2)}
+.entry__why--warn{background:rgba(250,178,25,.07);border-color:rgba(250,178,25,.28);
            color:var(--ink)}
-.why--warn b{color:#F3C765}
+.entry__why--warn b{color:#F3C765}
 
-/* Полный разбор. Свёрнут: в ленте он не нужен, а при разметке нужен весь. */
-.chain{margin:14px 0 0}
-.chain>summary{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+/* Полный разбор. Свёрнут: в ленте он не нужен, а при разметке нужен весь.
+
+   Приставка qa__ (question/answer), а не chain/step: журнал грузит и
+   fault.css, а там .chain и .step — совсем другая вещь, лента проверок
+   связи с вертикальным проводом. Имена совпали, fault.css подключён
+   последним и выигрывал: разбор уезжал вправо на 34px под чужой провод,
+   а строки шагов теряли отступы. */
+.qa{margin:14px 0 0}
+.qa>summary{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
   padding:6px 12px;border-radius:8px;font-size:12.5px;color:var(--ink-2);
   background:var(--surface-2);border:1px solid var(--line);
   list-style:none;user-select:none}
-.chain>summary::-webkit-details-marker{display:none}
-.chain>summary::before{content:"▸";font-size:10px;color:var(--ink-3)}
-.chain[open]>summary::before{content:"▾"}
-.chain>summary:hover{color:var(--ink);border-color:var(--line-strong)}
-.chain__n{font-family:var(--mono);font-size:11px;padding:1px 7px;
+.qa>summary::-webkit-details-marker{display:none}
+.qa>summary::before{content:"▸";font-size:10px;color:var(--ink-3)}
+.qa[open]>summary::before{content:"▾"}
+.qa>summary:hover{color:var(--ink);border-color:var(--line-strong)}
+.qa__n{font-family:var(--mono);font-size:11px;padding:1px 7px;
   border-radius:999px;background:rgba(240,168,104,.14);color:var(--accent)}
-.chain__list{margin:10px 0 0;padding:0 0 0 2px;list-style:none;
+/* Служебная сводка разбора: маршрут, поза, отметки шагов, действие — одной
+   строкой, как её сложил сервер. В ленте она не нужна (там человеческая
+   фраза), а при разметке нужна целиком — поэтому живёт под раскрытием. */
+.qa__sum{margin:10px 0 0;padding:8px 10px;border-radius:8px;
+  font-family:var(--mono);font-size:12px;line-height:1.5;
+  color:var(--ink-2);background:var(--surface-2);
+  border:1px solid var(--line);overflow-wrap:anywhere}
+
+.qa__list{margin:10px 0 0;padding:0 0 0 2px;list-style:none;
   display:grid;gap:2px}
-.step{display:grid;grid-template-columns:minmax(120px,auto) 1fr;
+/* Три колонки: о чём спросили | что ответила | сколько это стоило. Раньше
+   времени колонки не было — его загоняли во вторую и подтягивали
+   margin-top:-18px. Пока ответ был в одну строку, это сходило с рук; на
+   двух строках время уезжало под ответ и рвало ряд. */
+.qa__row{display:grid;grid-template-columns:minmax(120px,auto) 1fr auto;
       gap:4px 14px;padding:8px 10px;border-radius:8px;
       font-size:13px;line-height:1.4;background:var(--surface-2)}
-.step:nth-child(odd){background:transparent}
-.step>b{font-weight:600;color:var(--ink)}
-.step__t{font-family:var(--mono);font-size:11px;color:var(--ink-3);
-         grid-column:2;justify-self:end;margin-top:-18px}
-.step__a{grid-column:2;grid-row:1;color:var(--ink-2);padding-inline-end:70px}
-.step__n{grid-column:2;font-size:12px;color:var(--ink-3);font-style:italic}
-.step--fail{color:#F0908C}
-.step--fail .step__t{color:rgba(240,144,140,.7);margin-top:0}
+.qa__row:nth-child(odd){background:transparent}
+.qa__row>b{grid-column:1;grid-row:1;font-weight:600;color:var(--ink)}
+.qa__cost{grid-column:3;grid-row:1;justify-self:end;white-space:nowrap;
+         font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.qa__ans{grid-column:2;grid-row:1;color:var(--ink-2)}
+.qa__note{grid-column:2/-1;font-size:12px;color:var(--ink-3);font-style:italic}
+.qa__row--fail{color:#F0908C}
+.qa__row--fail .qa__cost{color:rgba(240,144,140,.7)}
 
 @media (max-width:640px){
   .now{grid-template-columns:76px 1fr;gap:12px;padding:12px}
   .now__line{font-size:17px}
-  .step{grid-template-columns:1fr;gap:2px}
-  .step__a,.step__t,.step__n{grid-column:1}
-  .step__a{grid-row:auto;padding-inline-end:0}
-  .step__t{justify-self:start;margin-top:0}
+  .qa__row{grid-template-columns:1fr;gap:2px}
+  .qa__ans,.qa__cost,.qa__note{grid-column:1}
+  .qa__ans{grid-row:auto}
+  .qa__cost{grid-row:auto;justify-self:start}
 }
 
 /* ------------------------------------------------------------------ оценка */
