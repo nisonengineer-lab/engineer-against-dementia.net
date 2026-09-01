@@ -282,9 +282,20 @@
     if (!f) return '';
     var out = [];
 
-    if (f.posture) {
+    /* Положений за событие может быть несколько: за восемнадцать минут
+       человек успевает пройти, посидеть и снова встать. Показываем их
+       цепочкой, «на чём» приписываем к последнему — оно про то, где он
+       остался. */
+    var poses = f.postures && f.postures.length ? f.postures
+              : (f.posture ? [f.posture] : []);
+    if (poses.length) {
+      var tail = poses[poses.length - 1] + onWhat(f.onWhat);
+      var line = poses.slice(0, -1).concat(tail).join(' → ');
+      /* Тревожным делает плашку только то, в чём он ОСТАЛСЯ. «Лежит» в
+         середине — это он прилёг на диван и встал, и подсвечивать это как
+         тревогу значит кричать на каждом отдыхе. */
       out.push(fact(f.posture === 'лежит' ? 'warn' : 'on',
-                    'поза', f.posture + onWhat(f.onWhat)));
+                    poses.length > 1 ? 'позы' : 'поза', line));
     }
     if (f.gait) out.push(fact('on', 'походка', f.gait));
     if (f.gaitSupport && !/никто|ничего|нет/i.test(f.gaitSupport)) {
@@ -292,7 +303,11 @@
     }
     if (f.gaitRisk && f.gaitRisk !== 'норма') out.push(fact('warn', 'риск', f.gaitRisk));
 
-    if (f.sleeping === true) out.push(fact('on', 'сон', 'спит'));
+    /* Спит сидя — не то же, что спит в постели: так засыпают от усталости
+       или когда нехорошо. Молча писать «спит» здесь нельзя. */
+    if (f.sleeping === true) {
+      out.push(fact('on', 'сон', f.posture === 'сидит' ? 'спит сидя' : 'спит'));
+    }
     else if (f.sleeping === false) out.push(fact('off', 'сон', 'не спит'));
 
     if (f.fallen === true) {
@@ -355,7 +370,13 @@
         if (a.risk && a.risk !== 'норма') p.push('риск: ' + a.risk);
         break;
       case 'posture':
-        p.push(a.posture + onWhat(a.on_what));
+        var seen = (a.postures && a.postures.length) ? a.postures
+                 : (a.posture ? [a.posture] : []);
+        if (seen.length) {
+          p.push(seen.slice(0, -1)
+                  .concat(seen[seen.length - 1] + onWhat(a.on_what))
+                  .join(' → '));
+        }
         p.push(a.sure);
         break;
       case 'scene':
@@ -366,6 +387,7 @@
         p.push(yn(a.sleeping, 'спит', 'не спит'));
         p.push(a.sure);
         if (a.eyes) p.push('глаза ' + a.eyes);
+        if (a.head && a.head !== 'не видно') p.push('голова ' + a.head);
         if (a.covered) p.push(a.covered);
         break;
       case 'fall':
