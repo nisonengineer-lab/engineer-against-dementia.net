@@ -176,6 +176,24 @@
     return '<div class="shot">' + inner + '</div>';
   }
 
+  /* ------- чистка записи, пришедшей с сервера -------
+
+     Служебная сводка разбора («диван | сидит | сидит, опираясь на
+     подлокотник…») собрана кодом из маршрута, позы и отметок шагов. В
+     ленте её нет вовсе; она нужна при разметке и живёт под раскрытием,
+     рядом с ответами шагов.
+
+     Сервер до 2.3.1 отдельного поля summary не знал и клал сводку в text.
+     Сайт обновляется раньше сервера и не должен от него зависеть, поэтому
+     разбираем это здесь: строка с палками — это сводка, где бы она ни
+     пришла. */
+  function tidy(e) {
+    if (e && !e.summary && e.text && e.text.indexOf(' | ') > 0) {
+      e.summary = e.text;
+    }
+    return e;
+  }
+
   function evValue(e, key) {
     var list = e.evidence || [];
     for (var i = 0; i < list.length; i++) if (list[i].k === key) return list[i].v;
@@ -431,7 +449,6 @@
             (e.recheck && e.recheck.state === 'queued'
               ? '<span class="tag-redo">на переоценке</span>' : '') +
           '</p>' +
-          '<p class="entry__text">' + esc(e.text) + '</p>' +
           factsHTML(e) +
           reasonHTML(e) +
           evidenceHTML(e) +
@@ -641,6 +658,7 @@
         moreBtn.innerHTML = 'Показать ещё <span id="moreN"></span>';
         moreN = $('#moreN');
 
+        collected = collected.map(tidy);
         state.items = more ? state.items.concat(collected) : collected;
         render();
         if (!more) loadNow();
@@ -901,7 +919,8 @@
     btn.textContent = 'Возвращаем…';
 
     API.post('/api/events/' + back.item.id + '/restore').then(function (r) {
-      state.items.splice(back.at, 0, (r.data && r.data.id) ? r.data : back.item);
+      state.items.splice(back.at, 0,
+        tidy((r.data && r.data.id) ? r.data : back.item));
       if (state.total) state.total++;
       clearTimeout(trashTimer);
       hideToast();

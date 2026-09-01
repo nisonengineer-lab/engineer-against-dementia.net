@@ -165,8 +165,6 @@
 .kind{font-family:var(--mono);font-size:12px;letter-spacing:.08em;
       text-transform:uppercase;color:var(--ink-3)}
 
-.entry__text{margin:12px 0 0;font-size:16.5px;line-height:1.45;color:var(--ink)}
-
 .ev{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0;padding:0;list-style:none}
 .ev li{padding:5px 10px;border-radius:7px;background:var(--surface-2);
        border:1px solid var(--line);
@@ -398,7 +396,6 @@
   .filters__row{gap:12px}
   .fld--grow{flex-basis:100%}
   .fld{flex:1 1 calc(50% - 6px)}
-  .entry__text{font-size:16px}
   .vote{flex-wrap:wrap}
   .del{margin-inline-start:0}
   .confirm__go{margin-inline-start:0;width:100%}
