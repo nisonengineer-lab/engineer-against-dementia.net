@@ -289,8 +289,11 @@
     var poses = f.postures && f.postures.length ? f.postures
               : (f.posture ? [f.posture] : []);
     if (poses.length) {
-      var tail = poses[poses.length - 1] + onWhat(f.onWhat);
-      var line = poses.slice(0, -1).concat(tail).join(' → ');
+      /* Без «на чём». Шаг позы про мебель больше не спрашивают: он был
+         обязан что-то ответить и выдумывал — человек полулежал на кровати,
+         а в карточке стояло «сидит на стуле». На чём он, говорит плашка
+         падения, и только когда это важно: пол или кровать. */
+      var line = poses.join(' → ');
       /* Тревожным делает плашку только то, в чём он ОСТАЛСЯ. «Лежит» в
          середине — это он прилёг на диван и встал, и подсвечивать это как
          тревогу значит кричать на каждом отдыхе. */
@@ -310,10 +313,16 @@
     }
     else if (f.sleeping === false) out.push(fact('off', 'сон', 'не спит'));
 
+    /* Упасть можно и на попу: осесть, сползти по стене, промахнуться мимо
+       стула. Поэтому «сел сам» и «лёг сам» — разные подписи, и на полу
+       тревожно и то, и другое. */
     if (f.fallen === true) {
-      out.push(fact('bad', 'падение', f.fallSurface ? 'упал на ' + f.fallSurface : 'упал'));
+      out.push(fact('bad', 'падение',
+                    f.fallSurface ? 'упал на ' + f.fallSurface : 'упал'));
     } else if (f.fallen === false) {
-      out.push(fact('off', 'падение', 'лёг сам'));
+      out.push(fact('off', 'падение', f.posture === 'сидит' ? 'сел сам' : 'лёг сам'));
+    } else if (f.onWhat === 'пол' || f.onWhat === 'земля') {
+      out.push(fact('bad', 'на полу', f.posture || 'внизу'));
     }
 
     if (f.toilet) out.push(fact('on', 'туалет', f.toilet));
@@ -372,11 +381,7 @@
       case 'posture':
         var seen = (a.postures && a.postures.length) ? a.postures
                  : (a.posture ? [a.posture] : []);
-        if (seen.length) {
-          p.push(seen.slice(0, -1)
-                  .concat(seen[seen.length - 1] + onWhat(a.on_what))
-                  .join(' → '));
-        }
+        if (seen.length) p.push(seen.join(' → '));
         p.push(a.sure);
         break;
       case 'scene':
@@ -391,7 +396,7 @@
         if (a.covered) p.push(a.covered);
         break;
       case 'fall':
-        p.push(yn(a.fallen, 'упал', 'лёг сам'));
+        p.push(yn(a.fallen, 'упал', 'опустился сам'));
         if (a.surface && a.surface !== 'не видно') p.push('под ним ' + a.surface);
         if (a.trying_to_get_up) p.push('пытается встать');
         p.push(a.sure);
@@ -1061,8 +1066,10 @@
 
     API.post('/api/session', { login: login, password: pass }).then(function (r) {
       go.disabled = false; go.textContent = 'Войти';
+      var who = r.data || {};
       state.authed = true;
-      state.user = r.data && r.data.user;
+      // Вход отвечает тем же телом, что и проверка сессии: имя в name.
+      state.user = who.user || (who.name ? { name: who.name } : null);
       $('#pass').value = '';
       dlg.close('ok');
       load(false);
@@ -1096,10 +1103,19 @@
   /* =================================================================== старт */
   function boot() {
     /* Кто мы. Ответ 401 здесь — не ошибка, а «гость»: показывать из-за
-       него карточку сбоя было бы враньём. */
+       него карточку сбоя было бы враньём.
+
+       Смотрим на ПОЛЕ ответа, а не на код. Сервер отвечает 200 и гостю
+       тоже — телом {"authed": false}. Раньше здесь стояло безусловное
+       state.authed = true на любой успешный ответ, и сайт считал владельцем
+       каждого, кто открыл страницу: рисовал «Выйти», включал фильтры и
+       вешал на карточки кнопки голоса и удаления. Данных гость всё равно не
+       получал — их не отдаёт сервер, — но кнопки были, и они молча не
+       работали. */
     API.get('/api/session', { tries: 1 }).then(function (r) {
-      state.authed = true;
-      state.user = r.data && r.data.user;
+      var who = r.data || {};
+      state.authed = !!who.authed;
+      state.user = who.user || (who.name ? { name: who.name } : null);
     }, function () {
       state.authed = false;
     }).then(function () {
