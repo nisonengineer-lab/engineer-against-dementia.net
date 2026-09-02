@@ -70,7 +70,13 @@
     cursor: null,              // курсор следующей порции
     total: 0,
     items: [],
-    loading: false
+    loading: false,
+    /* Карточки, которые сейчас пересматриваются. Это и есть то самое
+       временное хранилище: id кладётся сюда при нажатии и убирается, когда
+       сервер сказал «готово». Долгого хранения не нужно — очередь живёт на
+       сервере, в таблице recheck_queue, и переживает перезагрузку страницы:
+       при следующей загрузке ленты сервер сам пришлёт recheck у карточки. */
+    rechecking: {}
   };
 
   /* ----------------------------------------------------------- обращения */
@@ -260,18 +266,6 @@
      не спрашивали — тега нет вовсе. Без этого нельзя понять, модель
      ошиблась или её просто не спросили. */
 
-  /* «на чём» приходит в именительном: пол, диван, кровать. В строке нужен
-     предложный, иначе выходит «сидит на диван». Список короткий и закрытый —
-     это словарь зон, а не свободный текст. */
-  var ON_WHAT = {
-    'пол': 'полу', 'земля': 'земле', 'кровать': 'кровати', 'диван': 'диване',
-    'кресло': 'кресле', 'стул': 'стуле', 'унитаз': 'унитазе'
-  };
-  function onWhat(v) {
-    if (!v || v === 'не видно') return '';
-    return ' на ' + (ON_WHAT[v] || v);
-  }
-
   function fact(cls, label, value) {
     return '<span class="fact fact--' + cls + '">' +
            '<b>' + esc(label) + '</b>' + esc(value) + '</span>';
@@ -313,17 +307,11 @@
     }
     else if (f.sleeping === false) out.push(fact('off', 'сон', 'не спит'));
 
-    /* Упасть можно и на попу: осесть, сползти по стене, промахнуться мимо
-       стула. Поэтому «сел сам» и «лёг сам» — разные подписи, и на полу
-       тревожно и то, и другое. */
-    if (f.fallen === true) {
-      out.push(fact('bad', 'падение',
-                    f.fallSurface ? 'упал на ' + f.fallSurface : 'упал'));
-    } else if (f.fallen === false) {
-      out.push(fact('off', 'падение', f.posture === 'сидит' ? 'сел сам' : 'лёг сам'));
-    } else if (f.onWhat === 'пол' || f.onWhat === 'земля') {
-      out.push(fact('bad', 'на полу', f.posture || 'внизу'));
-    }
+    /* Падение — один вопрос с двумя ответами. Ни поверхности, ни своей
+       оценки опасности модель больше не даёт: на чём он оказался, она
+       решает внутри себя, а наружу выдаёт только «упал» или «не упал». */
+    if (f.fallen === true) out.push(fact('bad', 'падение', 'упал'));
+    else if (f.fallen === false) out.push(fact('off', 'падение', 'не падал'));
 
     if (f.toilet) out.push(fact('on', 'туалет', f.toilet));
 
@@ -374,7 +362,7 @@
         break;
       case 'gait':
         p.push(yn(a.walks, 'идёт', 'стоит на месте'));
-        p.push(a.gait); p.push(a.speed);
+        p.push(a.gait);
         if (a.support && !/никто|ничего|нет/i.test(a.support)) p.push('опора: ' + a.support);
         if (a.risk && a.risk !== 'норма') p.push('риск: ' + a.risk);
         break;
@@ -384,10 +372,6 @@
         if (seen.length) p.push(seen.join(' → '));
         p.push(a.sure);
         break;
-      case 'scene':
-        p.push(a.action);
-        if (a.objects && a.objects.length) p.push('предметы: ' + a.objects.join(', '));
-        break;
       case 'sleep':
         p.push(yn(a.sleeping, 'спит', 'не спит'));
         p.push(a.sure);
@@ -396,10 +380,7 @@
         if (a.covered) p.push(a.covered);
         break;
       case 'fall':
-        p.push(yn(a.fallen, 'упал', 'опустился сам'));
-        if (a.surface && a.surface !== 'не видно') p.push('под ним ' + a.surface);
-        if (a.trying_to_get_up) p.push('пытается встать');
-        p.push(a.sure);
+        p.push(yn(a.fallen, 'упал', 'не падал'));
         break;
       case 'meal':
         var m = [];
@@ -504,7 +485,40 @@
       '</div>';
   }
 
+  /* ------- карточка на время переоценки -------
+
+     Пока модель пересматривает запись, показывать старый разбор нельзя: он
+     как раз тот, который человек назвал неверным. Но и убирать карточку
+     из ленты тоже — она мигнёт и вернётся на другом месте.
+
+     Поэтому карточка сворачивается: время и вид записи остаются, всё
+     остальное уступает место полосе с крутилкой. Видно, что дело идёт и
+     где именно оно идёт. */
+  function busyHTML(e, withDay) {
+    var kinds = (e.kinds && e.kinds.length ? e.kinds : (e.kind ? [e.kind] : []))
+      .map(function (id) { return (kindById[id] || { label: id }).label; });
+    var running = e.recheck && e.recheck.state === 'running';
+    return '<li class="entry is-rechecking" data-id="' + esc(e.id) + '">' +
+      (withDay ? '<p class="entry__day">' + dayLabel(ms(e.startedAt)) + '</p>' : '') +
+      '<article class="entry__in entry__in--busy">' +
+        '<span class="rechk__spin" aria-hidden="true"></span>' +
+        '<div class="rechk">' +
+          '<p class="rechk__top">' + whenHTML(e) +
+            kinds.map(function (l) {
+              return '<span class="kind">' + esc(l) + '</span>';
+            }).join('') +
+          '</p>' +
+          '<p class="rechk__t">' +
+            (running ? '<b>Модель пересматривает запись.</b> Это занимает около минуты.'
+                     : '<b>Запись в очереди на переоценку.</b> Начнём через несколько секунд.') +
+          '</p>' +
+        '</div>' +
+      '</article>' +
+    '</li>';
+  }
+
   function entryHTML(e, withDay) {
+    if (state.rechecking[e.id]) return busyHTML(e, withDay);
     /* Видов записи может быть несколько: дед вышел из туалета и тут же сел
        есть — это и «туалет», и «приём пищи». Показываем все, в порядке
        важности, как их прислал сервер. Старый сервер шлёт одно поле kind —
@@ -630,7 +644,6 @@
     var extra = [];
     if (d.sleeping) extra.push('спит');
     if (d.toilet) extra.push('туалет: ' + d.toilet);
-    if (d.action) extra.push(d.action);
 
     nowBox.innerHTML =
       '<div class="now__shot">' + shot + '</div>' +
@@ -742,6 +755,7 @@
         collected = collected.map(tidy);
         state.items = more ? state.items.concat(collected) : collected;
         render();
+        resumeRechecks();
         if (!more) loadNow();
         if (slowest > 2500) slowNote(slowest);
       })
@@ -923,14 +937,7 @@
 
     API.post('/api/events/' + ev.id + '/recheck').then(function (r) {
       ev.recheck = { state: (r.data && r.data.state) || 'queued' };
-      b.querySelector('span').textContent = 'На переоценке';
-      var top = li.querySelector('.entry__top');
-      if (!top.querySelector('.tag-redo')) {
-        var tag = document.createElement('span');
-        tag.className = 'tag-redo';
-        tag.textContent = 'на переоценке';
-        top.appendChild(tag);
-      }
+      startRecheck(ev.id);
     }, function (err) {
       // Задача не принята — кнопку возвращаем, иначе человек уверен,
       // что запись стоит в очереди, а её там нет.
@@ -939,6 +946,67 @@
       entryErr(li, err, 'Запрос на переоценку не ушёл');
     });
   });
+
+  /* ------- ход переоценки -------
+
+     Спрашиваем сервер про КАЖДУЮ переоцениваемую запись отдельно, раз в три
+     секунды. Не про ленту целиком: лента может быть длинной, а ждут обычно
+     одну карточку, и человек смотрит именно на неё.
+
+     Когда сервер отвечает «done», он присылает и свежую карточку — тем же
+     ответом. Иначе после каждого «готово» пришлось бы ходить ещё раз за
+     списком, и карточка лишнюю секунду висела бы свёрнутой уже без причины. */
+  var RECHECK_POLL = 3000;
+
+  function startRecheck(id) {
+    if (state.rechecking[id]) return;
+    state.rechecking[id] = { since: Date.now() };
+    render();
+    pollRecheck(id);
+  }
+
+  function stopRecheck(id) {
+    delete state.rechecking[id];
+  }
+
+  function pollRecheck(id) {
+    if (!state.rechecking[id]) return;
+    API.get('/api/events/' + id + '/recheck', { tries: 1 }).then(function (r) {
+      var d = r.data || {};
+      var ev = byId(id);
+      if (ev) ev.recheck = { state: d.state };
+
+      if (d.state === 'done') {
+        stopRecheck(id);
+        if (d.event) {
+          var at = state.items.findIndex(function (x) { return x.id === id; });
+          if (at >= 0) state.items[at] = tidy(d.event);
+        }
+        render();
+        return;
+      }
+      if (d.state === 'none') {        // очередь потеряна — не висим вечно
+        stopRecheck(id);
+        render();
+        return;
+      }
+      render();
+      setTimeout(function () { pollRecheck(id); }, RECHECK_POLL);
+    }, function () {
+      // Связь моргнула — не бросаем ожидание, пробуем ещё раз.
+      setTimeout(function () { pollRecheck(id); }, RECHECK_POLL * 2);
+    });
+  }
+
+  /* Переоценка могла начаться в прошлый заход и пережить перезагрузку
+     страницы: очередь-то на сервере. Поднимаем ожидание по тому, что
+     сервер сам сказал о карточке. */
+  function resumeRechecks() {
+    state.items.forEach(function (e) {
+      var st = e.recheck && e.recheck.state;
+      if (st === 'queued' || st === 'running') startRecheck(e.id);
+    });
+  }
 
   /* ------------------------------------------------------------- удаление
      Два шага намеренно: запись уносит с собой кадр и видео, а промах
@@ -1161,6 +1229,64 @@
       paintNow();
     }
   }, 60000);
+
+  /* ------------------------------------------------- автообновление ленты
+
+     Раз в минуту тихо переспрашиваем первую страницу и подменяем то, что
+     изменилось. Тихо — значит без полосы «Загружаем…» и без прыжка
+     прокрутки: человек читает ленту, а не ждёт её.
+
+     ПОЧЕМУ НЕ ПРОСТО load(false). Перерисовка ленты рвёт всё, что человек
+     в ней делает: играющее видео обрывается на середине, раскрытый разбор
+     захлопывается, наполовину подтверждённое удаление отменяется. Поэтому
+     обновление пропускается, пока на экране что-то происходит, и делается
+     только тогда, когда действительно есть что менять.
+
+     Живые события и так приходят потоком (EventSource) — это подстраховка
+     на случай, когда поток отвалился и человек об этом не знает. */
+  var REFRESH = 60000;
+
+  function busyOnScreen() {
+    if (!state.authed || state.loading) return true;
+    if (document.hidden) return true;                 // вкладка не смотрит
+    if (feed.querySelector('video')) return true;     // идёт просмотр записи
+    if (feed.querySelector('details.qa[open]')) return true;   // раскрыт разбор
+    if (feed.querySelector('.entry.is-confirming')) return true;
+    if (Object.keys(state.rechecking).length) return true;
+    if (trash) return true;                           // висит полоса отмены
+    return false;
+  }
+
+  /* Что считается изменением: другой набор записей, другой уровень, другой
+     голос, другое состояние переоценки. Сравниваем отпечаток, а не объекты
+     целиком: сервер может прислать те же данные другим порядком ключей. */
+  function stamp(list) {
+    return list.map(function (e) {
+      return [e.id, e.level, (e.kinds || []).join(','), e.vote,
+              e.recheck && e.recheck.state].join(':');
+    }).join('|');
+  }
+
+  function quietRefresh() {
+    if (busyOnScreen()) return;
+    API.getShaped(query(null), ['items'], { tries: 1 }).then(function (r) {
+      var fresh = (r.data.items || []).map(tidy);
+      if (!fresh.length) return;
+      // Хвост, догруженный кнопкой «показать ещё», сохраняем: обновляем
+      // только голову ленты, ровно ту, что сервер сейчас и прислал.
+      var known = {};
+      fresh.forEach(function (e) { known[e.id] = true; });
+      var tail = state.items.filter(function (e) { return !known[e.id]; });
+      var merged = fresh.concat(tail);
+      if (stamp(merged) === stamp(state.items)) return;   // ничего не поменялось
+      state.items = merged;
+      state.total = r.data.total || state.total;
+      render();
+      resumeRechecks();
+    }, function () { /* не достучались — молчим, через минуту попробуем снова */ });
+  }
+
+  setInterval(quietRefresh, REFRESH);
 
   /* Свериться с сервером раз в пять минут: реже, чем человек ходит по дому,
      чаще нет смысла — строка меняется только с новым подтверждённым

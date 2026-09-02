@@ -103,6 +103,30 @@
            gap:22px;padding:16px;
            border:1px solid var(--line);border-radius:16px;
            background:var(--surface)}
+/* ------------------------------------------- карточка на переоценке
+   Пока модель пересматривает запись, старый разбор показывать нельзя: он
+   как раз тот, который человек назвал неверным. Карточка сворачивается до
+   одной полосы — время, вид записи и крутилка, — но остаётся на своём
+   месте в ленте, чтобы не мигать и не прыгать. */
+.entry.is-rechecking .entry__in--busy{
+  display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;
+  padding:14px 16px;border-color:rgba(240,168,104,.32);
+  background:linear-gradient(90deg,rgba(240,168,104,.05),transparent 60%)}
+.rechk{min-width:0}
+.rechk__top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0}
+.rechk__t{margin:5px 0 0;font-size:13px;line-height:1.45;color:var(--ink-3)}
+.rechk__t b{color:var(--ink-2);font-weight:600}
+
+/* Крутилка. Кольцо с разрывом: у него видно направление вращения, а у
+   пульсирующей точки — нет, и она читается как «зависло». */
+.rechk__spin{width:22px;height:22px;border-radius:50%;
+  border:2px solid rgba(240,168,104,.2);border-top-color:var(--accent);
+  animation:rechk-spin .8s linear infinite}
+@keyframes rechk-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .rechk__spin{animation-duration:2.4s}
+}
+
 .entry__left{min-width:0}
 
 /* Пока идёт запись, колонка с кадром раздвигается: 260 пикселей хватает
