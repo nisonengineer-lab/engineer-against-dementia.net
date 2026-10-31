@@ -1,0 +1,50 @@
+/* Демо-журнал: плашка сверху и всё, что в демо не нужно. */
+.demobar{background:rgba(240,168,104,.10);border-block-end:1px solid rgba(240,168,104,.32);
+  color:var(--ink);font-size:14px;line-height:1.45}
+.demobar__in{display:flex;align-items:center;gap:12px;padding-block:9px}
+.demobar__tag{flex:none;font-family:var(--mono);font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:#1A1409;background:var(--accent);
+  border-radius:5px;padding:2px 7px}
+.demobar__t{margin:0;color:var(--ink-2)}
+@media (max-width:640px){
+  .demobar__in{padding-inline:16px;align-items:flex-start}
+  .demobar__t{font-size:13px}
+}
+
+/* Демо только для чтения: оценка, переоценка, удаление, вход и выход
+   спрятаны. JS их и не рисует; это подстраховка. */
+.is-demo .acts, .is-demo .confirm, .is-demo .toast,
+.is-demo #signin, .is-demo #signin2, .is-demo #signout,
+.is-demo .lockbar, .is-demo #auth{display:none !important}
+
+/* Вводный блок на странице демо: что это и как читать карточку. */
+.demo-intro{margin-block:28px 8px;padding:24px 26px;border:1px solid var(--line-strong);
+  border-radius:16px;background:rgba(245,240,232,.03)}
+.demo-intro h2{margin:0 0 12px;font-size:22px;line-height:1.25}
+.demo-intro__lead{margin:0 0 12px;max-width:78ch;color:var(--ink);font-size:16px;line-height:1.6}
+.demo-intro__lead b{color:var(--accent-hi);font-weight:600}
+.demo-steps{margin:18px 0 0;padding:0;list-style:none;counter-reset:st;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px}
+.demo-steps li{counter-increment:st;position:relative;padding:14px 14px 14px 46px;
+  border:1px solid var(--line);border-radius:12px;color:var(--ink-2);font-size:14.5px;line-height:1.55}
+.demo-steps li::before{content:counter(st);position:absolute;inset-inline-start:14px;top:13px;
+  width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  background:var(--accent);color:#1A1409;font-size:12px;font-weight:700}
+.demo-steps b{color:var(--ink)}
+.demo-levels{margin:18px 0 0;display:flex;flex-wrap:wrap;gap:8px 28px}
+.demo-levels div{display:flex;gap:8px;align-items:baseline;font-size:14px}
+.demo-levels dt{font-weight:600;color:var(--ink);white-space:nowrap}
+.demo-levels dd{margin:0;color:var(--ink-2)}
+.demo-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:7px}
+.demo-dot--ok{background:var(--good)}
+.demo-dot--warn{background:var(--warn)}
+.demo-dot--crit{background:var(--crit)}
+.demo-intro__note{margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line);
+  color:var(--ink-3);font-size:13.5px;line-height:1.55;max-width:80ch}
+.demo-h1tag{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;vertical-align:middle;color:#1A1409;background:var(--accent);
+  border-radius:6px;padding:3px 8px;margin-inline-start:8px}
+@media (max-width:640px){
+  .demo-intro{padding:18px 16px}
+  .demo-intro__lead{font-size:15px}
+}
