@@ -595,7 +595,11 @@
 
   function render() {
     var html = '', prevDay = null;
-    state.items.forEach(function (e) {
+    /* Демо читают как историю, а не как живую ленту: по порядку времени,
+       от раннего к позднему — и дни, и события внутри дня. */
+    state.items.slice().sort(function (a, b) {
+      return ms(a.startedAt) - ms(b.startedAt);
+    }).forEach(function (e) {
       var d = dayLabel(ms(e.startedAt));
       html += entryHTML(e, d !== prevDay);
       prevDay = d;
