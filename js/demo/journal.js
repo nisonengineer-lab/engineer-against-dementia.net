@@ -42,6 +42,7 @@
     { id: 'sleep',    label: 'Sleep',          level: 'ok' },
     { id: 'meal',     label: 'Eating or drinking',   level: 'ok' },
     { id: 'meds',     label: 'Medication',    level: 'ok' },
+    { id: 'smoking',  label: 'Smoking',       level: 'ok' },
     { id: 'quiet',    label: 'Quiet',     level: 'ok' }
   ];
   var LVL = {
