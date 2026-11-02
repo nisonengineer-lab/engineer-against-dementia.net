@@ -595,10 +595,14 @@
 
   function render() {
     var html = '', prevDay = null;
-    /* Демо читают как историю, а не как живую ленту: по порядку времени,
-       от раннего к позднему — и дни, и события внутри дня. */
+    /* Дни — свежий сверху (Today, ниже Yesterday…), а события внутри дня —
+       по порядку времени, от утра к вечеру. */
+    function dayKey(e) {
+      var d = new Date(ms(e.startedAt));
+      return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    }
     state.items.slice().sort(function (a, b) {
-      return ms(a.startedAt) - ms(b.startedAt);
+      return (dayKey(b) - dayKey(a)) || (ms(a.startedAt) - ms(b.startedAt));
     }).forEach(function (e) {
       var d = dayLabel(ms(e.startedAt));
       html += entryHTML(e, d !== prevDay);
